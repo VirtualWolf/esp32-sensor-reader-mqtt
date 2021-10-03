@@ -52,7 +52,7 @@ async def read_sensor(client):
                         "humidity": humidity
                     })
 
-                    await client.publish(c['topic'], current_data, qos = 1)
+                    await client.publish(c['topic'], current_data, qos = 1, retain = True)
 
             gc.collect()
 
