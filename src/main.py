@@ -13,7 +13,7 @@ async def wifi_handler(state):
         logger.log('WiFi is up.')
         led.value(1)
     else:
-        logger.log('WiFi is down.', write_to_log=True)
+        logger.log('WiFi is down.')
         led.value(0)
     await asyncio.sleep(1)
 
@@ -31,8 +31,6 @@ async def main(client):
 config['wifi_coro'] = wifi_handler
 config['clean'] = False
 
-# Set up client
-MQTTClient.DEBUG = True  # Optional
 client = MQTTClient(config)
 
 try:

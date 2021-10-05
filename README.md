@@ -3,15 +3,22 @@ A version of my [esp32-sensor-reader](https://github.com/VirtualWolf/esp32-senso
 
 Requires a file called `config.json` inside `src` with the following contents:
 
-```
+```json
 {
     "client_id": "<client-id>",
     "server": "<broker-address>",
-    "port": <port to connect to the broker on>,
+    "port": 1883,
     "topic": "<topic to publish to>",
     "ssid": "<wifi network name>",
     "wifi_pw": "<wifi password>"
 }
 ```
 
-On an [Adafruit HUZZAH32](https://www.adafruit.com/product/3405), the red LED on the board will light up when it has connectivity to the MQTT broker.
+You can optionally add the following to override the default library values of `true` for `clean` and `clean_init`:
+
+```json
+    "clean": false,
+    "clean_init": false,
+```
+
+On an [Adafruit HUZZAH32](https://www.adafruit.com/product/3405), the red LED on the board will light up when it has connectivity to the MQTT broker and will go out when the connectivity stops.

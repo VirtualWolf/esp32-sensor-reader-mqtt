@@ -57,17 +57,6 @@ async def read_sensor(client):
             gc.collect()
 
         except Exception as e:
-            logger.log('Failed to read sensor: '  + str(e), write_to_log=True)
-
-
+            logger.log('Failed to read sensor: '  + str(e))
 
         await asyncio.sleep(30)
-
-def get_current_data():
-    current_data = ujson.dumps({
-        "timestamp": timestamp,
-        "temperature": temperature,
-        "humidity": humidity
-    })
-
-    return current_data
