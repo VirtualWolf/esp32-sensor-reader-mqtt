@@ -1,23 +1,20 @@
-from binascii import unhexlify
 import gc
 import utime
-from machine import Pin
+from machine import Pin, WDT
 import dht
 import ujson
 import uasyncio as asyncio
 import logger
 from config import read_configuration
 
-temperature = 0
-humidity = 0
-timestamp = 0
-
 c = read_configuration()
 
+wdt = WDT(timeout=300000)
+
 async def read_sensor(client):
-    global temperature
-    global humidity
-    global timestamp
+    temperature = 0
+    humidity = 0
+    timestamp = 0
 
     while True:
         logger.log('Reading sensor...')
@@ -37,22 +34,21 @@ async def read_sensor(client):
 
                 logger.log('First reading, values are %s˚ & %s%%' % (temperature, humidity))
             else:
-                if abs(temperature - temperature) > 0.3:
-                    logger.log('Skipping because difference is too large. Currently %s, got %s' % (temperature, temperature))
-                else:
-                    temperature = sensor.temperature()
-                    humidity = sensor.humidity()
-                    timestamp = (utime.time() + 946684800) * 1000
+                temperature = sensor.temperature()
+                humidity = sensor.humidity()
+                timestamp = (utime.time() + 946684800) * 1000
 
-                    logger.log('Sensor read at %s, new values: %s & %s%%' % (timestamp, temperature, humidity))
+                logger.log('Sensor read at %s, new values: %s & %s%%' % (timestamp, temperature, humidity))
 
-                    current_data = ujson.dumps({
-                        "timestamp": timestamp,
-                        "temperature": temperature,
-                        "humidity": humidity
-                    })
+                current_data = ujson.dumps({
+                    "timestamp": timestamp,
+                    "temperature": temperature,
+                    "humidity": humidity
+                })
 
-                    await client.publish(c['topic'], current_data, qos = 1, retain = True)
+                await client.publish(c['topic'], current_data, qos = 1, retain = True)
+
+                wdt.feed()
 
             gc.collect()
 
