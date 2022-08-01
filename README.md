@@ -14,11 +14,12 @@ Requires a file called `config.json` inside `src` with the following contents:
 }
 ```
 
-You can optionally add the following to override the default library values of `true` for `clean` and `clean_init`:
+You can optionally add the following to override the default MQTT library values of `true` for `clean` and `clean_init`, and to use your own NTP server instead of `time.cloudflare.com` for time setting on board startup:
 
 ```json
     "clean": false,
     "clean_init": false,
+    "ntp_server": "10.0.0.1"
 ```
 
 On an [Adafruit HUZZAH32](https://www.adafruit.com/product/3405), the red LED on the board will light up when it has connectivity to the MQTT broker and will go out when the connectivity stops.
