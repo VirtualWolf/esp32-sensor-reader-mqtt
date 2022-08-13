@@ -1,10 +1,13 @@
 import ntptime
 from mqtt_as import MQTTClient, config
-from machine import Pin, reset
+from machine import Pin, WDT
 from config import config
 import uasyncio as asyncio
 import sensor
 import logger
+
+# Automatically reboot after one week, given here in milliseconds
+wdt = WDT(timeout=604800000)
 
 async def wifi_handler(state):
     led = Pin(13, Pin.OUT)
@@ -38,17 +41,8 @@ config['clean'] = False
 
 client = MQTTClient(config)
 
-async def weekly_reboot():
-    while True:
-        await asyncio.sleep(604800) # 1 week in seconds
-        logger.log('Weekly reboot!')
-        reset()
-
 try:
-    asyncio.create_task(weekly_reboot())
-
     asyncio.run(main(client))
-    asyncio.run(weekly_reboot())
 finally:  # Prevent LmacRxBlk:1 errors.
     client.close()
     asyncio.new_event_loop()
