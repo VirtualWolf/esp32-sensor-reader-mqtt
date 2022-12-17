@@ -1,13 +1,18 @@
 import ntptime
 from mqtt_as import MQTTClient, config
-from machine import Pin, WDT
+from machine import Pin, Timer, reset
 from config import config
 import uasyncio as asyncio
 import sensor
 import logger
 
+def restart(timer):
+    reset()
+
+weekly_restart_timer = Timer(0)
+
 # Automatically reboot after one week, given here in milliseconds
-wdt = WDT(timeout=604800000)
+weekly_restart_timer.init(mode=Timer.ONE_SHOT, period=604800000, callback=restart)
 
 async def wifi_handler(state):
     led = Pin(13, Pin.OUT)

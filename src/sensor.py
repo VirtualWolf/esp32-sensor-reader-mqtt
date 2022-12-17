@@ -9,9 +9,9 @@ from config import read_configuration
 
 c = read_configuration()
 
-wdt = WDT(timeout=300000)
-
 async def read_sensor(client):
+    wdt = WDT(timeout=120000)
+
     temperature = 0
     humidity = 0
     timestamp = 0
