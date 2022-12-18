@@ -21,12 +21,9 @@ async def messages(client):
             import senko
 
             files = [
-                'senko/__init__.py',
-                'senko/senko.py',
                 'config.py',
                 'logger.py'
                 'main.py',
-                'mqtt_as.py',
                 'sensor.py',
                 'updater.py'
             ]
