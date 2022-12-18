@@ -7,6 +7,7 @@ import uasyncio as asyncio
 import logger
 from config import read_configuration
 
+
 c = read_configuration()
 
 async def read_sensor(client):

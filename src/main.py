@@ -1,9 +1,10 @@
 import ntptime
-from mqtt_as import MQTTClient, config
+from mqtt_as import MQTTClient, config as mqtt_config
 from machine import Pin, Timer, reset
 from config import config
 import uasyncio as asyncio
 import sensor
+import updater
 import logger
 
 def restart(timer):
@@ -38,13 +39,17 @@ async def main(client):
         logger.log('Connection failed.')
         return
 
+    for coroutine in (updater.subscribe, updater.messages):
+        asyncio.create_task(coroutine(client))
+
     while True:
         await sensor.read_sensor(client)
 
-config['wifi_coro'] = wifi_handler
-config['clean'] = False
+mqtt_config['wifi_coro'] = wifi_handler
+mqtt_config['clean'] = False
+mqtt_config['queue_len'] = 10
 
-client = MQTTClient(config)
+client = MQTTClient(mqtt_config)
 
 try:
     asyncio.run(main(client))
