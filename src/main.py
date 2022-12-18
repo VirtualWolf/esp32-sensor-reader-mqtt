@@ -7,37 +7,41 @@ import sensor
 import updater
 import logger
 
-def restart(timer):
-    reset()
+def set_time(timer = None):
+    ntptime.host = config['ntp_server']
 
-weekly_restart_timer = Timer(0)
+    logger.log('Setting time using server %s' % (ntptime.host))
 
-# Automatically reboot after one week, given here in milliseconds
-weekly_restart_timer.init(mode=Timer.ONE_SHOT, period=604800000, callback=restart)
+    try:
+        ntptime.settime()
+    except OSError:
+        logger.log('Failed to contact NTP server at %s' % config['ntp_server'])
+        reset()
 
 async def wifi_handler(state):
     led = Pin(13, Pin.OUT)
 
     if state:
-        logger.log('WiFi is up.')
+        logger.log('Wifi and MQTT broker are up')
         led.value(1)
     else:
-        logger.log('WiFi is down.')
+        logger.log('Wifi or MQTT broker is down')
         led.value(0)
     await asyncio.sleep(1)
 
 async def main(client):
     try:
         await client.connect()
-
-        ntptime.host = config['ntp_server']
-
-        logger.log('Setting time using server %s' % (ntptime.host))
-
-        ntptime.settime()
     except OSError:
-        logger.log('Connection failed.')
-        return
+        logger.log('Connection to wifi or MQTT broker failed')
+        reset()
+
+    # Run an initial NTP sync on board start
+    ntptime.settime()
+
+    # Synchronise with the NTP server once a day
+    set_time_timer = Timer(0)
+    set_time_timer.init(mode=Timer.PERIODIC, period=86400000, callback=set_time)
 
     for coroutine in (updater.subscribe, updater.messages):
         asyncio.create_task(coroutine(client))
