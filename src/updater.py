@@ -3,16 +3,6 @@ from machine import reset
 from config import config
 from logger import log
 
-async def subscribe(client):
-    update_topic = 'updates/%s' % config['client_id']
-
-    log('Subscribing to %s' % update_topic)
-
-    while True:
-        await client.up.wait()
-        client.up.clear()
-        await client.subscribe(update_topic, 1)
-
 async def messages(client):
     async for topic, msg, retained in client.queue:
         if msg.decode() == 'update':

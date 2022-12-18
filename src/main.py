@@ -34,6 +34,10 @@ async def up(client):
         client.up.clear()
         set_connection_status(True)
 
+        update_topic = 'updates/%s' % config['client_id']
+        logger.log('Subscribing to %s' % update_topic)
+        await client.subscribe(update_topic, 1)
+
 async def down(client):
     while True:
         await client.down.wait()  # Pause until connectivity changes
@@ -56,7 +60,7 @@ async def main(client):
     set_time_timer = Timer(0)
     set_time_timer.init(mode=Timer.PERIODIC, period=86400000, callback=set_time)
 
-    for coroutine in (up, down, updater.subscribe, updater.messages):
+    for coroutine in (up, down, updater.messages):
         asyncio.create_task(coroutine(client))
 
     while True:
