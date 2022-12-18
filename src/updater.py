@@ -16,6 +16,8 @@ async def subscribe(client):
 async def messages(client):
     async for topic, msg, retained in client.queue:
         if msg.decode() == 'update':
+            log('Triggering an update check!')
+
             gc.collect()
 
             import senko

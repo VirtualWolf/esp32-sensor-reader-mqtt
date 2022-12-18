@@ -66,6 +66,8 @@ class Senko:
             if not self._check_hash(latest_version, local_version):
                 changes.append(file)
 
+        print("Changed files: %s" % changes)
+
         return changes
 
     def fetch(self):
