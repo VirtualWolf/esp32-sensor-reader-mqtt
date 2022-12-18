@@ -21,14 +21,22 @@ async def messages(client):
             import senko
 
             files = [
+                'senko/__init__.py',
+                'senko/senko.py',
+                'mqtt_as.py',
                 'config.py',
-                'logger.py'
+                'logger.py',
                 'main.py',
                 'sensor.py',
                 'updater.py'
             ]
 
-            OTA = senko.Senko(user='VirtualWolf', repo='esp32-sensor-reader-mqtt', working_dir='src', files=files)
+            OTA = senko.Senko(
+                user='VirtualWolf',
+                repo='esp32-sensor-reader-mqtt',
+                branch='main',
+                working_dir='src',
+                files=files)
 
             if OTA.update():
                 log('Updated to the latest version! Rebooting...')

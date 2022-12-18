@@ -1,6 +1,6 @@
 import urequests
 import uhashlib
-
+import gc
 
 class Senko:
     raw = "https://raw.githubusercontent.com"
@@ -36,6 +36,11 @@ class Senko:
             return False
 
     def _get_file(self, url):
+        gc.collect()
+        print("Fetching %s" % url)
+        print("RAM free %d, allocated %d" % (gc.mem_free(), gc.mem_alloc()))
+        print("---")
+
         payload = urequests.get(url, headers=self.headers)
         code = payload.status_code
 
