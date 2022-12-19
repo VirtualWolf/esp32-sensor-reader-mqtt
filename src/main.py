@@ -54,6 +54,7 @@ async def main(client):
         reset()
 
     # Run an initial NTP sync on board start
+    ntptime.host = config['ntp_server']
     ntptime.settime()
 
     # Synchronise with the NTP server once a day
