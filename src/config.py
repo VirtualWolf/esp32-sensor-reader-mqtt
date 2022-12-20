@@ -1,9 +1,8 @@
 import ujson
 from mqtt_as import config
 
-file = open('config.json', 'r')
-c = ujson.load(file)
-file.close()
+with open('config.json', 'r') as file:
+    c = ujson.load(file)
 
 config['client_id']     = c.get('client_id')
 config['server']        = c.get('server')
