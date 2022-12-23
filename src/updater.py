@@ -78,6 +78,7 @@ def start_code_update():
         'senko/senko.py',
         'mqtt.py',
         'config.py',
+        'hmac.py',
         'logger.py',
         'main.py',
         'sensor.py',
