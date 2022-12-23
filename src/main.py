@@ -1,5 +1,5 @@
 import ntptime
-from mqtt_as import MQTTClient, config as mqtt_config
+from mqtt import MQTTClient, config as mqtt_config
 from machine import Pin, Timer, reset
 from config import config
 import uasyncio as asyncio

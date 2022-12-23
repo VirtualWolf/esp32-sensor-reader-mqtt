@@ -44,7 +44,7 @@ def start_code_update():
     files = [
         'senko/__init__.py',
         'senko/senko.py',
-        'mqtt_as.py',
+        'mqtt.py',
         'config.py',
         'logger.py',
         'main.py',

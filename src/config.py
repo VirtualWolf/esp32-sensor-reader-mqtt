@@ -1,5 +1,5 @@
 import ujson
-from mqtt_as import config
+from mqtt import config
 
 with open('config.json', 'r') as file:
     c = ujson.load(file)
