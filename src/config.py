@@ -12,6 +12,7 @@ config['clean']         = c.get('clean', True)
 config['ssid']          = c.get('ssid')
 config['wifi_pw']       = c.get('wifi_pw')
 config['ntp_server']    = c.get('ntp_server', 'time.cloudflare.com')
+config['signing_secret'] = c.get('signing_secret', None)
 
 def read_configuration():
     return c

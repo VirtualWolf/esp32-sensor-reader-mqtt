@@ -34,9 +34,13 @@ async def up(client):
         client.up.clear()
         set_connection_status(True)
 
-        update_topic = 'updates/%s' % config['client_id']
+        update_topic = 'commands/%s/update' % config['client_id']
         logger.log('Subscribing to %s' % update_topic)
         await client.subscribe(update_topic, 1)
+
+        get_config_topic = 'commands/%s/get_config' % config['client_id']
+        logger.log('Subscribing to %s' % get_config_topic)
+        await client.subscribe(get_config_topic, 1)
 
 async def down(client):
     while True:
@@ -67,7 +71,7 @@ async def main(client):
     while True:
         await sensor.read_sensor(client)
 
-mqtt_config['clean'] = False
+mqtt_config['clean'] = config['clean']
 mqtt_config['queue_len'] = 10
 
 client = MQTTClient(mqtt_config)
