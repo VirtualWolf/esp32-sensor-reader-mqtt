@@ -67,36 +67,22 @@ def update_config(incoming_config):
     reset()
 
 def start_code_update():
-    log('Triggered an update check!')
+    c = config.read_configuration()
+    log('Triggered an update!')
 
     gc.collect()
 
-    import senko
-
-    files = [
-        'senko/__init__.py',
-        'senko/senko.py',
-        'mqtt.py',
-        'config.py',
-        'hmac.py',
-        'logger.py',
-        'main.py',
-        'sensor.py',
-        'updater.py'
-    ]
-
-    OTA = senko.Senko(
-        user='VirtualWolf',
-        repo='esp32-sensor-reader-mqtt',
-        branch='main',
+    import update_from_github
+    OTA = update_from_github.UpdateFromGitHub(
+        username='VirtualWolf',
+        github_token=c['github_token'],
+        repository='esp32-sensor-reader-mqtt',
         working_dir='src',
-        files=files)
+    )
 
-    if OTA.update():
-        log('Updated to the latest version! Rebooting...')
-        reset()
-    else:
-        log('Already the latest version!')
+    OTA.update()
+    log('Update successful, restarting...')
+    reset()
 
 def is_signature_valid(content, signature = None):
     c = config.read_configuration()
