@@ -10,7 +10,7 @@ class UpdateFromGitHub:
             username (str): GitHub username.
             repository (str): GitHub repository to fetch.
             api_token (str): GitHub API token to allow read access to private repositories. (None)
-            ref (str): GitHub repo branch, commit, or tag to pull. (main)
+            ref (str): GitHub repository branch, commit, or tag to pull. (main)
             working_dir (str): Directory inside GitHub repo where the MicroPython app is. (src)
         """
         self.api_url = "https://api.github.com/repos/{}/{}/contents/{}?ref={}".format(username, repository, working_dir, ref)

@@ -32,6 +32,9 @@ async def messages(client):
             if current_config.get('signing_secret') is not None:
                 current_config.update({'signing_secret': '********'})
 
+            if current_config.get('github_token') is not None:
+                current_config.update({'github_token': '********'})
+
             await client.publish('logs/%s' % c['client_id'], ujson.dumps(current_config), qos = 1)
 
 def start_config_update(incoming_config, signature = None):
@@ -75,7 +78,7 @@ def start_code_update():
     import update_from_github
     OTA = update_from_github.UpdateFromGitHub(
         username='VirtualWolf',
-        github_token=c['github_token'],
+        api_token=c.get('github_token'),
         repository='esp32-sensor-reader-mqtt',
         working_dir='src',
     )
