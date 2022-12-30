@@ -39,7 +39,7 @@ Sending a message to the `commands/<CLIENT_ID>/update` topic with the following 
     }
 ```
 
-...will use [Senko](https://github.com/RangerDigital/senko) to pull down the latest committed code from the primary branch of this repository on GitHub and will restart the ESP32 when finished.
+...will pull down the full contents of latest committed code from the `src` directory of the primary branch of this repository on GitHub and will restart the ESP32 when finished.
 
 ### Updating configuration
 Sending a message to the `commands/<CLIENT_ID>/update` topic with the following JSON body...
