@@ -1,0 +1,9 @@
+{
+    "client_id": "{{ mqtt_client_id }}",
+    "server": "{{ mqtt_broker_address }}",
+    "port": {{ mqtt_broker_port | default('1883') }},
+    "topic": "{{ mqtt_publish_topic }}",
+    "ssid": "{{ ssid }}",
+    "wifi_pw": "{{ ssid_password }}",
+    "ntp_server": "{{ ntp_server | default('10.0.1.201') }}"
+}

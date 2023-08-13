@@ -56,4 +56,14 @@ Sending a message to the `commands/<CLIENT_ID>/update` topic with the following 
 
 ## Extras
 
-On an [Adafruit HUZZAH32](https://www.adafruit.com/product/3405), the red LED on the board will light up at boot and will turn off once connectivity to wifi and the MQTT broker is established. If the connection drops out, the LED will come back on.
+### LED status
+On an [Adafruit HUZZAH32](https://www.adafruit.com/product/3405), the red LED on the board will light up at boot and will turn off once connectivity to wifi and the MQTT broker is established. If the connection drops out (either wifi or to the MQTT broker), the LED will come back on.
+
+### Ansible runbooks
+Also included in this repository are the [Ansible](https://www.ansible.com) runbooks I use to erase and re-flash the ESP with a specified version of MicroPython, to generate the `config.json` file for each board/sensor setup, and to copy the code over to the board. These are particular for my setup so you'll need to adapt them for yourself.
+
+Run them with `ansible-playbook ansible/playbooks/<file>`:
+
+  * `flash_board.yml` — This will erase the board, download MicroPython, and flash it to the board. Currently I only have [Adafruit HUZZAH32](https://www.adafruit.com/product/3405) devices, but the `vars` dict in the playbook can be updated for other boards (the FeatherS2 uses the `GENERIC_S2` MicroPython version for example).
+  * `copy_code_dev.yml` — This will generate the `config.json` file and prompt for a client_id, MQTT broker address, and topic to publish to.
+  * `copy_code_prod.yml` — This is my "production" configuration I use for the temperature sensors that are set up permanently around the house. It only prompts for the client_id and the rest is hard-coded to avoid me making any configuration mistakes if I need to reflash the board.

@@ -1,0 +1,6 @@
+- name: Ensure esptool and ampy are installed
+  delegate_to: localhost
+  ansible.builtin.pip:
+    name:
+      - esptool
+      - adafruit-ampy

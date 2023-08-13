@@ -1,0 +1,12 @@
+- name: Copy code to ESP32 board
+  hosts: localhost
+  vars_prompt:
+    - name: mqtt_client_id
+      prompt: What is the MQTT client_id?
+      private: false
+  vars:
+    mqtt_broker_address: 10.0.1.201
+    mqtt_publish_topic: "home/{{ mqtt_client_id }}/weather"
+  roles:
+    - install_tools
+    - copy_code

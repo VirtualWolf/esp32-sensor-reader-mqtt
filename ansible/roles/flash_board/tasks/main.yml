@@ -1,0 +1,23 @@
+- name: Download Micropython version
+  delegate_to: localhost
+  ansible.builtin.get_url:
+    url: "https://micropython.org/resources/firmware/{{ boards[board].firmware_filename }}-{{ micropython_version }}.bin"
+    dest: "/tmp"
+
+- name: Erase board
+  delegate_to: localhost
+  ansible.builtin.command: "esptool.py --chip {{ boards[board].chip }} --port {{ serial_port }} erase_flash"
+  register: esptool_erase
+
+- debug: var=esptool_erase.stdout_lines
+- debug: var=esptool_erase.stderr_lines
+  when: esptool_erase.stderr_lines
+
+- name: Flash Micropython to board
+  delegate_to: localhost
+  ansible.builtin.command: "esptool.py --chip {{ boards[board].chip }} --port {{ serial_port }} write_flash -z 0x1000 /tmp/{{ boards[board].firmware_filename }}-{{ micropython_version }}.bin"
+  register: esptool_flash
+
+- debug: var=esptool_flash.stdout_lines
+- debug: var=esptool_flash.stderr_lines
+  when: esptool_flash.stderr_lines
