@@ -1,5 +1,5 @@
 # esp32-sensor-reader-mqtt
-A version of my [esp32-sensor-reader](https://github.com/VirtualWolf/esp32-sensor-reader) that reads from an attached AM2303/DHT22 temperature/humidity sensor and publishes the readings as JSON to a local MQTT broker. Uses Peter Hinch's [mqtt_as.py](https://github.com/peterhinch/micropython-mqtt/blob/master/mqtt_as/README.md) driver.
+A version of my [esp32-sensor-reader](https://github.com/VirtualWolf/esp32-sensor-reader) that reads from an attached DHT22 temperature/humidity sensor or Bosch BME280 temperature/humidity/air pressure sensor and publishes the readings as JSON to a local MQTT broker. Uses Peter Hinch's [mqtt_as.py](https://github.com/peterhinch/micropython-mqtt/blob/master/mqtt_as/README.md) MQTT library, as well as Robert Hammelrath's [BME280](https://github.com/robert-hh/BME280/) library if you're using a BME280 instead of a DHT22.
 
 ## Usage
 
@@ -22,6 +22,12 @@ You can optionally add the following to override the default MQTT library values
     "clean": false,
     "clean_init": false,
     "ntp_server": "10.0.0.1"
+```
+
+If you're using a BME280 sensor instead of a DHT22, you'll need to specify the sensor type as well:
+
+```json
+    "sensor_type": "bme280"
 ```
 
 ## Checking and updating code and configuration remotely
@@ -67,3 +73,12 @@ Run them with `ansible-playbook ansible/playbooks/<file>`:
   * `flash_board.yml` — This will erase the board, download MicroPython, and flash it to the board. Currently I only have [Adafruit HUZZAH32](https://www.adafruit.com/product/3405) devices, but the `vars` dict in the playbook can be updated for other boards (the FeatherS2 uses the `GENERIC_S2` MicroPython version for example).
   * `copy_code_dev.yml` — This will generate the `config.json` file and prompt for a client_id, MQTT broker address, and topic to publish to.
   * `copy_code_prod.yml` — This is my "production" configuration I use for the temperature sensors that are set up permanently around the house. It only prompts for the client_id and the rest is hard-coded to avoid me making any configuration mistakes if I need to reflash the board.
+
+### Adding a self-contained Ansible installation
+* Install and configure [pyenv](https://github.com/pyenv/pyenv)
+* Install the version of Python for this project — `pyenv install`
+* Add a new virtualenv for this project — `python -m venv .venv`
+* Activate the virtualenv — `. .venv/bin/activate`
+* Install Ansible — `pip install -r requirements.txt`
+
+Before running any `ansible-playbook` commands, load the virtualenv with `. .venv/bin/activate`.

@@ -2,7 +2,8 @@ all:
   hosts:
     localhost:
       ansible_connection: local
-      micropython_version: 20230426-v1.20.0
+      ansible_python_interpreter: python
+      micropython_version: 20240222-v1.22.2
       serial_port: /dev/tty.SLAB_USBtoUART
       ssid: "{{ lookup('community.general.onepassword', 'UniFi Dream Router', section='Primary network', field='ssid') }}"
       ssid_password: "{{ lookup('community.general.onepassword', 'UniFi Dream Router', section='Primary network', field='password') }}"

@@ -1,1 +1,5 @@
-micropy-cli
+adafruit-ampy==1.1.0
+ansible==9.4.0
+esptool==4.7.0
+micropy-cli==4.2.2
+micropython-esp32-esp32-generic-stubs==1.22.0.post1

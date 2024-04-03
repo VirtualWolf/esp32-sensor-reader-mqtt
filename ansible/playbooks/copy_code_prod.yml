@@ -4,9 +4,13 @@
     - name: mqtt_client_id
       prompt: What is the MQTT client_id?
       private: false
+
+    - name: sensor_type
+      prompt: What is the sensor type? (dht22/bme280)
+      default: dht22
+      private: false
   vars:
     mqtt_broker_address: 10.0.1.201
     mqtt_publish_topic: "home/{{ mqtt_client_id }}/weather"
   roles:
-    - install_tools
     - copy_code

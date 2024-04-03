@@ -17,6 +17,10 @@
       prompt: What is the MQTT topic to publish messages to?
       default: "home/{{ mqtt_client_id }}/weather"
       private: false
+
+    - name: sensor_type
+      prompt: What is the sensor type? (dht22/bme280)
+      default: dht22
+      private: false
   roles:
-    - install_tools
     - copy_code
