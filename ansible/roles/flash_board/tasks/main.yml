@@ -4,9 +4,18 @@
     url: "https://micropython.org/resources/firmware/{{ boards[board].firmware_filename }}-{{ micropython_version }}.bin"
     dest: "/tmp"
 
+- name: Prompt for download mode for FeatherS2
+  ansible.builtin.pause:
+    prompt: |
+      Make sure the board is in download mode before flashing:
+        - Press and hold the [BOOT] button
+        - Press and release the [RST] button
+        - Release the [BOOT] button
+  when: board == 'um_feathers2'
+
 - name: Erase board
   delegate_to: localhost
-  ansible.builtin.command: "esptool.py --chip {{ boards[board].chip }} --port {{ serial_port }} erase_flash"
+  ansible.builtin.command: "esptool.py --chip {{ boards[board].chip }} --port {{ boards[board].download_mode_serial_port | default(boards[board].serial_port) }} {{ boards[board].esptool_options | default('') }} erase_flash"
   register: esptool_erase
 
 - debug: var=esptool_erase.stdout_lines
@@ -15,9 +24,15 @@
 
 - name: Flash Micropython to board
   delegate_to: localhost
-  ansible.builtin.command: "esptool.py --chip {{ boards[board].chip }} --port {{ serial_port }} write_flash -z 0x1000 /tmp/{{ boards[board].firmware_filename }}-{{ micropython_version }}.bin"
+  ansible.builtin.command: "esptool.py --chip {{ boards[board].chip }} --port {{ boards[board].download_mode_serial_port | default(boards[board].serial_port) }} {{ boards[board].esptool_options | default('') }} write_flash -z 0x1000 /tmp/{{ boards[board].firmware_filename }}-{{ micropython_version }}.bin"
   register: esptool_flash
 
 - debug: var=esptool_flash.stdout_lines
 - debug: var=esptool_flash.stderr_lines
   when: esptool_flash.stderr_lines
+
+- name: Restart the FeatherS2
+  delegate_to: localhost
+  ansible.builtin.command:
+    cmd: "mpremote connect port:{{ boards[board].serial_port }} reset"
+  when: board == 'um_feathers2'

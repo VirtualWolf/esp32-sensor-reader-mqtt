@@ -4,13 +4,8 @@
     src: templates/config.j2
     dest: "{{ lookup('env', 'PWD') }}/src/config.json"
 
-- name: Copy files to board
+- name: Copy files to board and restart
   delegate_to: localhost
   ansible.builtin.command:
     chdir: "{{ lookup('env', 'PWD') }}/src"
-    cmd: "ampy --port {{ serial_port }} put . /"
-
-# This is somewhat hacky but will force a reboot of the board to pick up the new code immediately
-- name: Reset board
-  delegate_to: localhost
-  ansible.builtin.command: "esptool.py --port {{ serial_port }} --after hard_reset read_mac"
+    cmd: "mpremote connect port:{{ boards[board].serial_port }} cp -r . : + reset"

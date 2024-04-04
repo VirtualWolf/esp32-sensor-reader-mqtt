@@ -3,6 +3,11 @@
   vars:
     mqtt_client_id: dev
   vars_prompt:
+    - name: board
+      prompt: What is the ESP32 board type? (huzzah32/um_feathers2)
+      default: huzzah32
+      private: false
+
     - name: mqtt_client_id
       prompt: What is the MQTT client_id?
       default: dev
@@ -19,8 +24,8 @@
       private: false
 
     - name: sensor_type
-      prompt: What is the sensor type? (dht22/bme280)
-      default: dht22
+      prompt: What is the sensor type? (bme280/dht22)
+      default: bme280
       private: false
   roles:
     - copy_code

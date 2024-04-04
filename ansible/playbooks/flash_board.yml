@@ -1,15 +1,9 @@
 - name: Flash ESP32 board
   hosts: localhost
-  vars:
-    boards:
-      # Used for the Adafruit HUZZAH32
-      esp32:
-        chip: esp32
-        firmware_filename: ESP32_GENERIC
   vars_prompt:
     - name: board
-      prompt: What is the ESP32 board type?
-      default: esp32
+      prompt: What is the ESP32 board type? (huzzah32/um_feathers2)
+      default: huzzah32
       private: false
   roles:
     - flash_board

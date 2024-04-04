@@ -3,7 +3,26 @@ all:
     localhost:
       ansible_connection: local
       ansible_python_interpreter: python
-      micropython_version: 20240222-v1.22.2
-      serial_port: /dev/tty.SLAB_USBtoUART
       ssid: "{{ lookup('community.general.onepassword', 'UniFi Dream Router', section='Primary network', field='ssid') }}"
       ssid_password: "{{ lookup('community.general.onepassword', 'UniFi Dream Router', section='Primary network', field='password') }}"
+
+      micropython_version: 20240222-v1.22.2
+
+      boards:
+        # Adafruit HUZZAH32: https://www.adafruit.com/product/3405
+        huzzah32:
+          chip: esp32
+          firmware_filename: ESP32_GENERIC
+          serial_port: /dev/tty.SLAB_USBtoUART
+          sda_pin: 23
+          scl_pin: 22
+
+        # Unexpected Maker FeatherS2: https://feathers2.io
+        um_feathers2:
+          chip: esp32s2
+          firmware_filename: UM_FEATHERS2
+          serial_port: /dev/cu.usbmodem1234561
+          download_mode_serial_port: /dev/tty.usbmodem01
+          esptool_options: "--after no_reset"
+          sda_pin: 8
+          scl_pin: 9

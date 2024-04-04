@@ -56,13 +56,12 @@ async def read_sensor(client):
                     wdt.feed()
 
             elif c['sensor_type'] == 'bme280':
-                # On an Adafruit HUZZAH32, this assumes the pins used for SDA and
-                # are the ones explicitly marked on the board as such
-                i2c = I2C(0, sda=Pin(23), scl=Pin(22))
+                i2c = I2C(0, sda=Pin(c['sda_pin']), scl=Pin(c['scl_pin']))
 
-                # The "address" value is 119 on an Adafruit HUZZAH32 rather than
-                # the default 118 that the BME280 library assumes so it has to be
-                # set explicitly. It can be determined with i2c.scan().
+                # The "address" value is 119 on both an Adafruit HUZZAH32 as well
+                # as the Unexpected Maker Feather S2, and not the default 118 that
+                # the BME280 library assumes.
+                # The address to use can be determined with i2c.scan()
                 sensor = bme280.BME280(i2c=i2c, address=119)
 
                 (temperature, pressure, humidity) = sensor.read_compensated_data()

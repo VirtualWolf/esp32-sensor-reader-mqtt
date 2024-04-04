@@ -1,13 +1,17 @@
 - name: Copy code to ESP32 board
   hosts: localhost
   vars_prompt:
+    - name: board
+      prompt: What is the ESP32 board type? (huzzah32/um_feathers2)
+      default: huzzah32
+      private: false
+
     - name: mqtt_client_id
       prompt: What is the MQTT client_id?
       private: false
 
     - name: sensor_type
       prompt: What is the sensor type? (dht22/bme280)
-      default: dht22
       private: false
   vars:
     mqtt_broker_address: 10.0.1.201
