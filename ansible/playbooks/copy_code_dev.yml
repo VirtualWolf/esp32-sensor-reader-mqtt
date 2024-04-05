@@ -32,5 +32,10 @@
       prompt: Disable the watchdog timer to prevent automatic restarts?
       default: true
       private: false
+
+    - name: enable_bme280_additional_data
+      prompt: Enable sending dew point and atmospheric pressure?
+      default: true
+      private: false
   roles:
     - copy_code

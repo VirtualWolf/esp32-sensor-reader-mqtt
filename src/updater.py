@@ -12,10 +12,9 @@ async def messages(client):
     async for topic, msg, retained in client.queue:
         gc.collect()
 
-
         commands_topic_prefix = f"commands/{c['client_id']}"
 
-        if topic.decode() == f'{commands_topic_prefix}/update':
+        if topic.decode() == f'{commands_topic_prefix}/update_config':
             try:
                 payload = ujson.loads(msg.decode())
 

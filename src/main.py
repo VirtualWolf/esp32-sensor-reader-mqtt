@@ -36,7 +36,7 @@ async def up(client):
 
         commands_topic_prefix = f"commands/{config['client_id']}"
 
-        update_topic = f'{commands_topic_prefix}/update'
+        update_topic = f'{commands_topic_prefix}/update_config'
         logger.log(f'Subscribing to {update_topic}')
         await client.subscribe(update_topic, 1)
 

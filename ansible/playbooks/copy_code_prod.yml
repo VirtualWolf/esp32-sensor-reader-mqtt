@@ -16,5 +16,6 @@
   vars:
     mqtt_broker_address: 10.0.1.201
     mqtt_publish_topic: "home/{{ mqtt_client_id }}/weather"
+    enable_bme280_additional_data: "{{ true if mqtt_client_id == 'outdoor' else false }}"
   roles:
     - copy_code

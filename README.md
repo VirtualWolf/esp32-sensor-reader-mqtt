@@ -30,6 +30,12 @@ If you're using a BME280 sensor instead of a DHT22, you'll need to specify the s
     "sensor_type": "bme280"
 ```
 
+If you're using several BME280s, you might not care about the atmospheric pressure and dew point data for any that aren't located outside, in which case you can disable it from being sent to the MQTT broker at all:
+
+```json
+    "enable_bme280_additional_data": false
+```
+
 By default, the board will restart itself automatically if it's not able to either read the sensor or publish to the MQTT topic after two minutes. You can override this by setting the `disable_watchdog` option:
 
 ```json
@@ -61,7 +67,7 @@ Sending a message to the `commands/<CLIENT_ID>/update` topic with the following 
 ...will pull down the full contents of latest committed code from the `src` directory of the primary branch of this repository on GitHub and will restart the ESP32 when finished.
 
 ### Updating configuration
-Sending a message to the `commands/<CLIENT_ID>/update` topic with the following JSON body...
+Sending a message to the `commands/<CLIENT_ID>/update_config` topic with the following JSON body...
 
 ```json
     {

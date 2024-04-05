@@ -22,6 +22,7 @@ config['ntp_server']    = c.get('ntp_server', 'time.cloudflare.com')
 config['github_token']  = c.get('github_token', None)
 config['signing_secret']    = c.get('signing_secret', None)
 config['disable_watchdog']  = c.get('disable_watchdog', False)
+config['enable_bme280_additional_data'] = c.get('enable_bme280_additional_data', True)
 
 def read_configuration():
     return config

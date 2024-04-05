@@ -64,15 +64,19 @@ async def read_sensor(client):
 
                 logger.log(f'Sensor read at {timestamp}, new values: {temperature}, {humidity}%, and {pressure} hPa. Dew point is {dew_point}')
 
-                current_data = ujson.dumps({
+                current_data = {
                     "timestamp": timestamp,
                     "temperature": temperature,
                     "humidity": humidity,
-                    "dew_point": dew_point,
-                    "pressure": pressure/100
-                })
+                }
 
-                await client.publish(c['topic'], current_data, qos = 1, retain = True)
+                if c['enable_bme280_additional_data'] is True:
+                    current_data.update({
+                        "dew_point": dew_point,
+                        "pressure": pressure/100
+                    })
+
+                await client.publish(c['topic'], ujson.dumps(current_data), qos = 1, retain = True)
 
                 if c['disable_watchdog'] is not True:
                     wdt.feed()
