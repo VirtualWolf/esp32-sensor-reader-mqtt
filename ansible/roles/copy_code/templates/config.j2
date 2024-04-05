@@ -8,5 +8,6 @@
     "ntp_server": "{{ ntp_server | default('10.0.1.201') }}",
     "sensor_type": "{{ sensor_type | default('dht22') }}",
     "sda_pin": {{ boards[board].sda_pin }},
-    "scl_pin": {{ boards[board].scl_pin }}
+    "scl_pin": {{ boards[board].scl_pin }},
+    "disable_watchdog": {{ disable_watchdog }}
 }

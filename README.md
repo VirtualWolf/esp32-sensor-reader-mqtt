@@ -30,11 +30,24 @@ If you're using a BME280 sensor instead of a DHT22, you'll need to specify the s
     "sensor_type": "bme280"
 ```
 
+By default, the board will restart itself automatically if it's not able to either read the sensor or publish to the MQTT topic after two minutes. You can override this by setting the `disable_watchdog` option:
+
+```json
+    "disable_watchdog": true
+```
+
 ## Checking and updating code and configuration remotely
-The ESP32 will subscribe to two topics, `commands/<CLIENT_ID>/update` and `commands/<CLIENT_ID>/get_config`.
+The ESP32 will subscribe to three topics:
+
+* `commands/<CLIENT_ID>/get_config`
+* `commands/<CLIENT_ID>/get_system_info`
+* `commands/<CLIENT_ID>/update`
 
 ### Get current config
 Sending a message to the `get_config` topic (with any message content, it doesn't matter what it is) will cause the ESP32 to publish a message to `logs/<CLIENT_ID>` with the current `config.json` file, with the wifi password blanked out, so you can double-check how a given board is configured.
+
+### Get system info
+Sending a message to the `get_system_info` topic (with any message content, it doesn't matter what it is) will cause the ESP32 to publish a message to `logs/<CLIENT_ID>` with the MicroPython version of the board and the value of `gc.free_mem()`.
 
 ### Updating code
 Sending a message to the `commands/<CLIENT_ID>/update` topic with the following JSON body...

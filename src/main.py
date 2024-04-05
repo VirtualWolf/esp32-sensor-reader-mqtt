@@ -1,21 +1,21 @@
 import ntptime
-from mqtt import MQTTClient, config as mqtt_config
 from machine import Pin, Timer, reset
-from config import config
 import uasyncio as asyncio
+from mqtt import MQTTClient, config as mqtt_config
+from config import config
 import sensor
 import updater
 import logger
 
-def set_time(timer = None):
+def set_time():
     ntptime.host = config['ntp_server']
 
-    logger.log('Setting time using server %s' % (ntptime.host))
+    logger.log(f'Setting time using server {ntptime.host}')
 
     try:
         ntptime.settime()
     except OSError:
-        logger.log('Failed to contact NTP server at %s' % config['ntp_server'])
+        logger.log(f'Failed to contact NTP server at {ntptime.host}')
         reset()
 
 def set_connection_status(state):
@@ -34,13 +34,19 @@ async def up(client):
         client.up.clear()
         set_connection_status(True)
 
-        update_topic = 'commands/%s/update' % config['client_id']
-        logger.log('Subscribing to %s' % update_topic)
+        commands_topic_prefix = f"commands/{config['client_id']}"
+
+        update_topic = f'{commands_topic_prefix}/update'
+        logger.log(f'Subscribing to {update_topic}')
         await client.subscribe(update_topic, 1)
 
-        get_config_topic = 'commands/%s/get_config' % config['client_id']
-        logger.log('Subscribing to %s' % get_config_topic)
+        get_config_topic = f'{commands_topic_prefix}/get_config'
+        logger.log(f'Subscribing to {get_config_topic}')
         await client.subscribe(get_config_topic, 1)
+
+        get_system_info_topic = f'{commands_topic_prefix}/get_system_info'
+        logger.log(f'Subscribing to {get_system_info_topic}')
+        await client.subscribe(get_system_info_topic, 1)
 
 async def down(client):
     while True:
@@ -71,7 +77,6 @@ async def main(client):
     while True:
         await sensor.read_sensor(client)
 
-mqtt_config['clean'] = config['clean']
 mqtt_config['queue_len'] = 10
 
 client = MQTTClient(mqtt_config)

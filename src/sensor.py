@@ -12,7 +12,8 @@ import bme280_float as bme280
 c = read_configuration()
 
 async def read_sensor(client):
-    wdt = WDT(timeout=120000)
+    if c['disable_watchdog'] is not True:
+        wdt = WDT(timeout=120000)
 
     temperature = 0
     humidity = 0
@@ -31,28 +32,21 @@ async def read_sensor(client):
                 temperature = sensor.temperature()
                 humidity = sensor.humidity()
 
-                if temperature == 0 and humidity == 0:
-                    # Embedded systems epoch is 2000-01-01 00:00:00 UTC, so we need
-                    # to add 946684800 seconds onto it to turn it into a UNIX epoch
-                    # timestamp
-                    timestamp = (utime.time() + 946684800) * 1000
+                temperature = sensor.temperature()
+                humidity = sensor.humidity()
+                timestamp = (utime.time() + 946684800) * 1000
 
-                    logger.log(f'First reading, values are {temperature} & {humidity}%')
-                else:
-                    temperature = sensor.temperature()
-                    humidity = sensor.humidity()
-                    timestamp = (utime.time() + 946684800) * 1000
+                logger.log(f'Sensor read at {timestamp}, new values: {temperature} & {humidity}%')
 
-                    logger.log(f'Sensor read at {timestamp}, new values: {temperature} & {humidity}%')
+                current_data = ujson.dumps({
+                    "timestamp": timestamp,
+                    "temperature": temperature,
+                    "humidity": humidity
+                })
 
-                    current_data = ujson.dumps({
-                        "timestamp": timestamp,
-                        "temperature": temperature,
-                        "humidity": humidity
-                    })
+                await client.publish(c['topic'], current_data, qos = 1, retain = True)
 
-                    await client.publish(c['topic'], current_data, qos = 1, retain = True)
-
+                if c['disable_watchdog'] is not True:
                     wdt.feed()
 
             elif c['sensor_type'] == 'bme280':
@@ -80,7 +74,8 @@ async def read_sensor(client):
 
                 await client.publish(c['topic'], current_data, qos = 1, retain = True)
 
-                wdt.feed()
+                if c['disable_watchdog'] is not True:
+                    wdt.feed()
 
             gc.collect()
 

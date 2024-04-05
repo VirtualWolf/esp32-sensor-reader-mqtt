@@ -2,8 +2,8 @@ import gc
 import hmac
 from uhashlib import sha256
 import ujson
-import config
 from machine import reset
+import config
 from logger import log
 
 async def messages(client):
@@ -12,7 +12,10 @@ async def messages(client):
     async for topic, msg, retained in client.queue:
         gc.collect()
 
-        if topic.decode() == 'commands/%s/update' % c['client_id']:
+
+        commands_topic_prefix = f"commands/{c['client_id']}"
+
+        if topic.decode() == f'{commands_topic_prefix}/update':
             try:
                 payload = ujson.loads(msg.decode())
 
@@ -23,7 +26,7 @@ async def messages(client):
             except:
                 pass
 
-        if topic.decode() == 'commands/%s/get_config' % c['client_id']:
+        if topic.decode() == f'{commands_topic_prefix}/get_config':
             with open('config.json', 'r') as file:
                 current_config = ujson.load(file)
 
@@ -35,7 +38,17 @@ async def messages(client):
             if current_config.get('github_token') is not None:
                 current_config.update({'github_token': '********'})
 
-            await client.publish('logs/%s' % c['client_id'], ujson.dumps(current_config), qos = 1)
+            await client.publish(f"logs/{c['client_id']}", ujson.dumps(current_config), qos = 1)
+
+        if topic.decode() == f'{commands_topic_prefix}/get_system_info':
+            from platform import platform
+
+            system_info = {
+                "micropython_version": platform(),
+                "free_memory": gc.mem_free()
+            }
+
+            await client.publish(f"logs/{c['client_id']}", ujson.dumps(system_info), qos = 1)
 
 def start_config_update(incoming_config, signature = None):
     c = config.read_configuration()
@@ -54,7 +67,7 @@ def start_config_update(incoming_config, signature = None):
 
 def update_config(incoming_config):
     with open('config.json', 'r') as file:
-            current_config = ujson.load(file)
+        current_config = ujson.load(file)
 
     log('Current configuration:')
     log(current_config)

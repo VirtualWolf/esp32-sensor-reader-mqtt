@@ -27,5 +27,10 @@
       prompt: What is the sensor type? (bme280/dht22)
       default: bme280
       private: false
+
+    - name: disable_watchdog
+      prompt: Disable the watchdog timer to prevent automatic restarts?
+      default: true
+      private: false
   roles:
     - copy_code
