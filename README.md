@@ -47,7 +47,7 @@ The ESP32 will subscribe to three topics:
 
 * `commands/<CLIENT_ID>/get_config`
 * `commands/<CLIENT_ID>/get_system_info`
-* `commands/<CLIENT_ID>/update`
+* `commands/<CLIENT_ID>/update_config`
 
 ### Get current config
 Sending a message to the `get_config` topic (with any message content, it doesn't matter what it is) will cause the ESP32 to publish a message to `logs/<CLIENT_ID>` with the current `config.json` file, with the wifi password blanked out, so you can double-check how a given board is configured.
@@ -56,7 +56,7 @@ Sending a message to the `get_config` topic (with any message content, it doesn'
 Sending a message to the `get_system_info` topic (with any message content, it doesn't matter what it is) will cause the ESP32 to publish a message to `logs/<CLIENT_ID>` with the MicroPython version of the board and the value of `gc.free_mem()`.
 
 ### Updating code
-Sending a message to the `commands/<CLIENT_ID>/update` topic with the following JSON body...
+Sending a message to the `commands/<CLIENT_ID>/update_config` topic with the following JSON body...
 
 ```json
     {
