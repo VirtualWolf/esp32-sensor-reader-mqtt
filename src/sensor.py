@@ -5,14 +5,11 @@ import dht
 import ujson
 import uasyncio as asyncio
 import logger
-from config import read_configuration
+from config import config
 import bme280_float as bme280
 
-
-c = read_configuration()
-
 async def read_sensor(client):
-    if c['disable_watchdog'] is not True:
+    if config['disable_watchdog'] is not True:
         wdt = WDT(timeout=120000)
 
     temperature = 0
@@ -25,7 +22,7 @@ async def read_sensor(client):
         logger.log('Reading sensor...')
 
         try:
-            if c['sensor_type'] == 'dht22':
+            if config['sensor_type'] == 'dht22':
                 sensor = dht.DHT22(Pin(26))
                 sensor.measure()
 
@@ -38,19 +35,19 @@ async def read_sensor(client):
 
                 logger.log(f'Sensor read at {timestamp}, new values: {temperature} & {humidity}%')
 
-                current_data = ujson.dumps({
+                current_data = {
                     "timestamp": timestamp,
                     "temperature": temperature,
                     "humidity": humidity
-                })
+                }
 
-                await client.publish(c['topic'], current_data, qos = 1, retain = True)
+                await publish_sensor_reading(reading=current_data, client=client)
 
-                if c['disable_watchdog'] is not True:
+                if config['disable_watchdog'] is not True:
                     wdt.feed()
 
-            elif c['sensor_type'] == 'bme280':
-                i2c = I2C(0, sda=Pin(c['sda_pin']), scl=Pin(c['scl_pin']))
+            elif config['sensor_type'] == 'bme280':
+                i2c = I2C(0, sda=Pin(config['sda_pin']), scl=Pin(config['scl_pin']))
 
                 # The "address" value is 119 on both an Adafruit HUZZAH32 as well
                 # as the Unexpected Maker Feather S2, and not the default 118 that
@@ -70,20 +67,23 @@ async def read_sensor(client):
                     "humidity": humidity,
                 }
 
-                if c['enable_bme280_additional_data'] is True:
+                if config['enable_bme280_additional_data'] is True:
                     current_data.update({
                         "dew_point": dew_point,
                         "pressure": pressure/100
                     })
 
-                await client.publish(c['topic'], ujson.dumps(current_data), qos = 1, retain = True)
+                await publish_sensor_reading(reading=current_data, client=client)
 
-                if c['disable_watchdog'] is not True:
+                if config['disable_watchdog'] is not True:
                     wdt.feed()
 
             gc.collect()
 
         except Exception as e:
-            logger.log('Failed to read sensor: '  + str(e))
+            await logger.publish_log_message(message={'error': f'Failed to read sensor, error was: {str(e)}'}, client=client)
 
         await asyncio.sleep(30)
+
+async def publish_sensor_reading(reading, client):
+    await client.publish(config['topic'], ujson.dumps(reading), qos = 1, retain = True)

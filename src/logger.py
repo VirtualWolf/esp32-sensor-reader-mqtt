@@ -1,16 +1,25 @@
 import utime
+import ujson
+from config import config
 
-def log(message, write_to_log=False):
+def log(message):
     year, month, day, hour, minute, second, weekday, yearday = utime.gmtime()
 
     now = '{}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}'.format(year, month, day, hour, minute, second)
 
     log_line = '[%s] %s' % (now, message)
 
-    if write_to_log:
-        print(log_line)
+    print(log_line)
 
-        with open('log', 'a') as f:
-            f.write(log_line + '\n')
-    else:
-        print(log_line)
+async def publish_log_message(message, client):
+    if 'config' in message:
+        message['config'].update({'wifi_pw': '********'})
+
+        if message['config'].get('signing_secret') is not None:
+            message['config'].update({'signing_secret': '********'})
+
+        if message['config'].get('github_token') is not None:
+            message['config'].update({'github_token': '********'})
+
+    log(message)
+    await client.publish(config['logs_topic'], ujson.dumps(message), qos = 1)

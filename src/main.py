@@ -4,7 +4,7 @@ import uasyncio as asyncio
 from mqtt import MQTTClient, config as mqtt_config
 from config import config
 import sensor
-import updater
+import admin
 import logger
 
 def set_time():
@@ -34,19 +34,10 @@ async def up(client):
         client.up.clear()
         set_connection_status(True)
 
-        commands_topic_prefix = f"commands/{config['client_id']}"
+        logger.log(f"Subscribing to {config['commands_topic']}")
+        await client.subscribe(config['commands_topic'], 1)
 
-        update_topic = f'{commands_topic_prefix}/update_config'
-        logger.log(f'Subscribing to {update_topic}')
-        await client.subscribe(update_topic, 1)
-
-        get_config_topic = f'{commands_topic_prefix}/get_config'
-        logger.log(f'Subscribing to {get_config_topic}')
-        await client.subscribe(get_config_topic, 1)
-
-        get_system_info_topic = f'{commands_topic_prefix}/get_system_info'
-        logger.log(f'Subscribing to {get_system_info_topic}')
-        await client.subscribe(get_system_info_topic, 1)
+        await logger.publish_log_message({'message': f"Client '{config['client_id']}' is online!"}, client=client)
 
 async def down(client):
     while True:
@@ -71,7 +62,7 @@ async def main(client):
     set_time_timer = Timer(0)
     set_time_timer.init(mode=Timer.PERIODIC, period=86400000, callback=set_time)
 
-    for coroutine in (up, down, updater.messages):
+    for coroutine in (up, down, admin.messages):
         asyncio.create_task(coroutine(client))
 
     while True:

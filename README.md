@@ -42,32 +42,47 @@ By default, the board will restart itself automatically if it's not able to eith
     "disable_watchdog": true
 ```
 
-## Checking and updating code and configuration remotely
-The ESP32 will subscribe to three topics:
-
-* `commands/<CLIENT_ID>/get_config`
-* `commands/<CLIENT_ID>/get_system_info`
-* `commands/<CLIENT_ID>/update_config`
-
-### Get current config
-Sending a message to the `get_config` topic (with any message content, it doesn't matter what it is) will cause the ESP32 to publish a message to `logs/<CLIENT_ID>` with the current `config.json` file, with the wifi password blanked out, so you can double-check how a given board is configured.
-
-### Get system info
-Sending a message to the `get_system_info` topic (with any message content, it doesn't matter what it is) will cause the ESP32 to publish a message to `logs/<CLIENT_ID>` with the MicroPython version of the board and the value of `gc.free_mem()`.
-
-### Updating code
-Sending a message to the `commands/<CLIENT_ID>/update_config` topic with the following JSON body...
+By default the remote code updating described below will default to the `main` branch of this repository (`https://github.com/VirtualWolf/esp32-sensor-reader-mqtt`) but those settings can be customised with the following options:
 
 ```json
-    {
-        "update_code": true
-    }
+    "github_token": "a-very-secret-token",
+    "github_username": "jdoe",
+    "github_repository": "my-esp32-sensor-reader-fork",
+    "github_ref": "a-branch-or-tag-or-commit"
 ```
 
-...will pull down the full contents of latest committed code from the `src` directory of the primary branch of this repository on GitHub and will restart the ESP32 when finished.
+The `github_token` variable is only required if the repository is private.
+
+## Checking and updating code and configuration remotely
+The ESP32 will subscribe to the topic `commands/<CLIENT_ID>` to listen for commands, and will publish log messages to `logs/<CLIENT_ID>`.
+
+For ease of use, I have an admin UI in my [pi-home-dashboard](https://github.com/VirtualWolf/pi-home-dashboard) that lives at `admin.html`.
+
+### Get current config
+Send a message to the `commands/<CLIENT_ID>` topic with the following payload:
+
+```json
+{
+    "command": "get_config"
+}
+```
+
+And the current contents of `config.json` will be published to `logs/<CLIENT_ID>` so you can see how a given board is configured.
+
+
+### Get system info
+Send a message to the `commands/<CLIENT_ID>` topic with the following payload:
+
+```json
+{
+    "command": "get_system_info"
+}
+```
+
+And a message will be published to to `logs/<CLIENT_ID>` with the MicroPython version of the board and the value of `gc.free_mem()`.
 
 ### Updating configuration
-Sending a message to the `commands/<CLIENT_ID>/update_config` topic with the following JSON body...
+Send a message to the `commands/<CLIENT_ID>` topic with the following payload:
 
 ```json
     {
@@ -77,7 +92,30 @@ Sending a message to the `commands/<CLIENT_ID>/update_config` topic with the fol
     }
 ```
 
-...will trigger an update of the `config.json` file for the given fields in the `config` object. In the example above, this would update _just_ the `server` value and all the other existing values will be kept. Once the update is finished, the ESP32 will restart.
+And the board will trigger an update of the `config.json` file for the given fields in the `config` object. In the example above, this would update _just_ the `server` value and all the other existing values will be kept. Once the update is finished, the ESP32 will restart.
+
+To _remove_ a configuration option, send the configuration option with an empty string:
+
+```json
+    {
+        "config": {
+            "ntp_server": ""
+        }
+    }
+```
+
+Note that the _required_ options (`client_id`, `server`, `port`, `topic`, `ssid`, and `wifi_pw`) cannot be deleted, only updated to new values.
+
+### Updating code
+Send a message to the `commands/<CLIENT_ID>` topic with the following payload:
+
+```json
+    {
+        "command": "update_code"
+    }
+```
+
+...will pull down the full contents of latest committed code from the `src` directory of the primary branch of this repository on GitHub and will restart the ESP32 when finished.
 
 ## Extras
 
