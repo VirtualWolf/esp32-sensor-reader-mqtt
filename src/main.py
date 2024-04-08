@@ -37,7 +37,7 @@ async def up(client):
         logger.log(f"Subscribing to {config['commands_topic']}")
         await client.subscribe(config['commands_topic'], 1)
 
-        await logger.publish_log_message({'message': f"Client '{config['client_id']}' is online!"}, client=client)
+        await logger.publish_log_message({'status': "online"}, client=client, retain=True)
 
 async def down(client):
     while True:

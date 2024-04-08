@@ -11,7 +11,7 @@ def log(message):
 
     print(log_line)
 
-async def publish_log_message(message, client):
+async def publish_log_message(message, client, retain=False):
     if 'config' in message:
         message['config'].update({'wifi_pw': '********'})
 
@@ -19,4 +19,4 @@ async def publish_log_message(message, client):
             message['config'].update({'github_token': '********'})
 
     log(message)
-    await client.publish(config['logs_topic'], ujson.dumps(message), qos = 1)
+    await client.publish(config['logs_topic'], ujson.dumps(message), qos = 1, retain=retain)

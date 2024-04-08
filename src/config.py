@@ -12,6 +12,7 @@ config['clean_init']                    = c.get('clean_init', True)
 config['clean']                         = c.get('clean', True)
 config['ssid']                          = c.get('ssid')
 config['wifi_pw']                       = c.get('wifi_pw')
+config['will']                          = f"logs/{c.get('client_id')}", '{"status": "offline"}', True, 1
 
 # Settings for the sensor reading
 config['topic']                         = c.get('topic')
