@@ -9,6 +9,6 @@
     "sensor_type": "{{ sensor_type | default('dht22') }}",
     "sda_pin": {{ boards[board].sda_pin }},
     "scl_pin": {{ boards[board].scl_pin }},
-    "disable_watchdog": {{ disable_watchdog | default(false) }},
-    "enable_bme280_additional_data": {{ enable_bme280_additional_data | default(true) }}
+    "disable_watchdog": {{ disable_watchdog | default(false) | bool | to_nice_json }},
+    "enable_bme280_additional_data": {{ enable_bme280_additional_data | default(true) | bool | to_nice_json }}
 }

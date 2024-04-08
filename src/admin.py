@@ -66,7 +66,8 @@ async def update_config(incoming_config, client):
 
         return
 
-    if not config_value:
+
+    if config_value == '':
         del current_config[config_key]
     else:
         current_config.update(incoming_config)
