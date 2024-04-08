@@ -15,9 +15,6 @@ async def publish_log_message(message, client):
     if 'config' in message:
         message['config'].update({'wifi_pw': '********'})
 
-        if message['config'].get('signing_secret') is not None:
-            message['config'].update({'signing_secret': '********'})
-
         if message['config'].get('github_token') is not None:
             message['config'].update({'github_token': '********'})
 

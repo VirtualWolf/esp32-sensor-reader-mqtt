@@ -19,6 +19,8 @@ class UpdateFromGitHub:
         self.client = client
 
     async def _get_repository_contents(self, api_url):
+        await publish_log_message(message={'message': f'Getting repository contents from {api_url}'}, client=self.client)
+
         response = urequests.get(api_url, headers=self.headers)
         json = response.json()
 
@@ -26,10 +28,10 @@ class UpdateFromGitHub:
             await self._process_item(file)
 
     async def _process_item(self, file):
-        if file['type'] is 'file':
+        if file['type'] == 'file':
             await self._get_file(file['download_url'], file['name'])
 
-        if file['type'] is 'dir':
+        if file['type'] == 'dir':
             await self._get_dir(file['url'], file['name'])
 
     async def _get_file(self, url, filename):
@@ -44,7 +46,7 @@ class UpdateFromGitHub:
             with open(filename, "w") as local_file:
                 local_file.write(response.text)
         else:
-            await publish_log_message(message={'error': f'Failed to get file, status code was {code}'}, client=self.client)
+            await publish_log_message(message={'error': f'Failed to get {filename}, status code was {code}'}, client=self.client)
 
     async def _get_dir(self, url, dir_name):
         await publish_log_message(message={'message': f'Getting directory {dir_name}'}, client=self.client)

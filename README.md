@@ -24,6 +24,12 @@ You can optionally add the following to override the default MQTT library values
     "ntp_server": "10.0.0.1"
 ```
 
+The sensor type is assumed to be a DHT22 connected to GPIO pin 26 by default, the pin can be changed if necessary:
+
+```json
+    "tx_pin": 24
+```
+
 If you're using a BME280 sensor instead of a DHT22, you'll need to specify the sensor type as well:
 
 ```json
@@ -56,7 +62,7 @@ The `github_token` variable is only required if the repository is private.
 ## Checking and updating code and configuration remotely
 The ESP32 will subscribe to the topic `commands/<CLIENT_ID>` to listen for commands, and will publish log messages to `logs/<CLIENT_ID>`.
 
-For ease of use, I have an admin UI in my [pi-home-dashboard](https://github.com/VirtualWolf/pi-home-dashboard) that lives at `admin.html`.
+For ease of management, an admin UI lives in the [pi-home-dashboard](https://github.com/VirtualWolf/pi-home-dashboard) repository at `/admin.html`.
 
 ### Get current config
 Send a message to the `commands/<CLIENT_ID>` topic with the following payload:
@@ -115,7 +121,7 @@ Send a message to the `commands/<CLIENT_ID>` topic with the following payload:
     }
 ```
 
-...will pull down the full contents of latest committed code from the `src` directory of the primary branch of this repository on GitHub and will restart the ESP32 when finished.
+...will pull down the full contents of latest committed code from the `src` directory of the primary branch of this repository on GitHub and will restart the ESP32 when finished. As mentioned above, the location of the code to download can be changed with the `github_username`, `github_repository`, and `github_ref` configuration options.
 
 ## Extras
 

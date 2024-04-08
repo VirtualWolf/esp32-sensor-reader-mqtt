@@ -23,7 +23,7 @@ async def read_sensor(client):
 
         try:
             if config['sensor_type'] == 'dht22':
-                sensor = dht.DHT22(Pin(26))
+                sensor = dht.DHT22(Pin(config['tx_pin']))
                 sensor.measure()
 
                 temperature = sensor.temperature()

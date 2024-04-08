@@ -1,7 +1,5 @@
 from platform import platform
 import gc
-import hmac
-from uhashlib import sha256
 import ujson
 from machine import reset
 from config import config
@@ -24,14 +22,13 @@ async def messages(client):
                         await get_system_info(client)
 
                     elif payload['command'] == 'update_config' and 'config' in payload:
-                        await start_config_update(incoming_config=payload.get('config'), signature=payload.get('signature'), client=client)
+                        await update_config(incoming_config=payload.get('config'), client=client)
 
                     elif payload['command'] == 'update_code':
                         await start_code_update(client)
 
             except ValueError:
                 await publish_log_message(message={'error': f'Received payload was not JSON: {msg.decode()}'}, client=client)
-
 
 
 async def get_config(client):
@@ -49,21 +46,6 @@ async def get_system_info(client):
     }
 
     await publish_log_message(message=system_info, client=client)
-
-
-
-async def start_config_update(incoming_config, client, signature = None):
-    if config['signing_secret'] is not None:
-        if is_signature_valid(incoming_config, signature):
-            await publish_log_message(message={'message': 'Signature is valid, proceeding with update...'}, client=client)
-
-            await update_config(incoming_config, client)
-        else:
-            await publish_log_message(message={'message': 'Signature is not valid'}, client=client)
-
-            return
-    else:
-        await update_config(incoming_config, client)
 
 
 
@@ -119,16 +101,3 @@ async def start_code_update(client):
     await publish_log_message(message={'message': 'Code update successful, restarting board...'}, client=client)
 
     reset()
-
-
-
-def is_signature_valid(content, signature = None):
-    stringified_content = ujson.dumps(content, separators=(',',':'))
-
-    generated_hash = hmac.new(
-        bytes(config['signing_secret'], 'UTF-8'),
-        bytes(stringified_content, 'UTF-8'),
-        digestmod=sha256
-    )
-
-    return generated_hash.hexdigest() == signature
