@@ -144,3 +144,4 @@ dmypy.json
 !src/lib
 
 src/config.json
+src/.version

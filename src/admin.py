@@ -3,7 +3,7 @@ import gc
 import ujson
 from machine import reset
 from config import config
-from update_from_github import UpdateFromGitHub
+from update_from_github import Updater
 from logger import publish_log_message
 
 async def messages(client):
@@ -40,7 +40,15 @@ async def get_config(client):
 
 
 async def get_system_info(client):
+    try:
+        with open('.version', 'r') as file:
+            commit = file.read()
+    except OSError:
+        commit = 'No .version file found!'
+
+
     system_info = {
+        "version": commit,
         "micropython_version": platform(),
         "free_memory": gc.mem_free()
     }
@@ -89,7 +97,7 @@ async def start_code_update(client):
 
     gc.collect()
 
-    OTA = UpdateFromGitHub(
+    OTA = Updater(
         username=config['github_username'],
         api_token=config['github_token'],
         repository=config['github_repository'],

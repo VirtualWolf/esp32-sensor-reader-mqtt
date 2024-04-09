@@ -8,8 +8,6 @@ with open('config.json', 'r') as file:
 config['client_id']                     = c.get('client_id')
 config['server']                        = c.get('server')
 config['port']                          = c.get('port')
-config['clean_init']                    = c.get('clean_init', True)
-config['clean']                         = c.get('clean', True)
 config['ssid']                          = c.get('ssid')
 config['wifi_pw']                       = c.get('wifi_pw')
 config['will']                          = f"logs/{c.get('client_id')}", '{"status": "offline"}', True, 1

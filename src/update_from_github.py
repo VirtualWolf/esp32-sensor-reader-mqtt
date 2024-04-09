@@ -6,23 +6,45 @@ import gc
 import urequests
 from logger import publish_log_message
 
-class UpdateFromGitHub:
+class Updater:
     def __init__(self, username, repository, client, ref="main", api_token=None):
-        self.api_url = "https://api.github.com/repos/{}/{}/contents/src?ref={}".format(username, repository, ref)
+        self.api_repository_contents_url = f'https://api.github.com/repos/{username}/{repository}/contents/src?ref={ref}'
+        self.api_commits_url = f'https://api.github.com/repos/{username}/{repository}/commits?per_page=1&sha={ref}'
         self.headers = {
             "User-Agent": username
         }
 
         if api_token is not None:
-            self.headers.append({"Authorization": "token %s" % api_token})
+            self.headers['Authorization'] = f'token {api_token}'
 
         self.client = client
 
-    async def _get_repository_contents(self, api_url):
-        await publish_log_message(message={'message': f'Getting repository contents from {api_url}'}, client=self.client)
+    async def _get_latest_commit_hash(self, api_commits_url):
+        await publish_log_message(message={'message': 'Getting latest commit hash...'}, client=self.client)
 
-        response = urequests.get(api_url, headers=self.headers)
+        gc.collect()
+
+        commits_response = urequests.get(api_commits_url, headers=self.headers)
+        commits_json = commits_response.json()
+        commit_hash = commits_json[0]['sha'][0:7]
+
+        await publish_log_message(message={'message': f'Latest commit hash is {commit_hash}, writing to .version file...'}, client=self.client)
+
+        gc.collect()
+
+        with open('.version', 'w') as file:
+            file.write(commit_hash[0:7])
+
+
+    async def _get_repository_contents(self, api_repository_contents_url):
+        await publish_log_message(message={'message': f'Getting repository contents from {api_repository_contents_url}'}, client=self.client)
+
+        gc.collect()
+
+        response = urequests.get(api_repository_contents_url, headers=self.headers)
         json = response.json()
+
+        gc.collect()
 
         for file in json:
             await self._process_item(file)
@@ -39,8 +61,12 @@ class UpdateFromGitHub:
 
         await publish_log_message(message={'message': f'Fetching {url}'}, client=self.client)
 
+        gc.collect()
+
         response = urequests.get(url, headers=self.headers)
         code = response.status_code
+
+        gc.collect()
 
         if code == 200:
             with open(filename, "w") as local_file:
@@ -51,8 +77,12 @@ class UpdateFromGitHub:
     async def _get_dir(self, url, dir_name):
         await publish_log_message(message={'message': f'Getting directory {dir_name}'}, client=self.client)
 
+        gc.collect()
+
         response = urequests.get(url, headers=self.headers)
         json = response.json()
+
+        gc.collect()
 
         try:
             os.mkdir(dir_name)
@@ -67,4 +97,5 @@ class UpdateFromGitHub:
         os.chdir('..')
 
     async def update(self):
-        await self._get_repository_contents(self.api_url)
+        await self._get_latest_commit_hash(self.api_commits_url)
+        await self._get_repository_contents(self.api_repository_contents_url)

@@ -16,11 +16,9 @@ Requires a file called `config.json` inside `src` with the following contents:
 }
 ```
 
-You can optionally add the following to override the default MQTT library values of `true` for `clean` and `clean_init`, and to use your own NTP server instead of `time.cloudflare.com` for time setting on board startup:
+You can use your own NTP server instead of `time.cloudflare.com` for time setting on board startup:
 
 ```json
-    "clean": false,
-    "clean_init": false,
     "ntp_server": "10.0.0.1"
 ```
 

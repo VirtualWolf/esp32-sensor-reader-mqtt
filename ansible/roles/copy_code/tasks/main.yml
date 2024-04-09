@@ -4,6 +4,17 @@
     src: templates/config.j2
     dest: "{{ lookup('env', 'PWD') }}/src/config.json"
 
+- name: Get current Git commit hash
+  delegate_to: localhost
+  ansible.builtin.command: git rev-parse --short HEAD
+  register: repository
+
+- name: Write Git commit hash to .version file
+  delegate_to: localhost
+  ansible.builtin.copy:
+    content: "{{ repository.stdout }}"
+    dest: "{{ lookup('env', 'PWD') }}/src/.version"
+
 - name: Copy files to board and restart
   delegate_to: localhost
   ansible.builtin.command:
