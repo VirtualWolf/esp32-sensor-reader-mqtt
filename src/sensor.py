@@ -7,23 +7,21 @@ import uasyncio as asyncio
 import logger
 from config import config
 import bme280_float as bme280
+import pms5003
 
 async def read_sensor(client):
     if config['disable_watchdog'] is not True:
-        wdt = WDT(timeout=120000)
-
-    temperature = 0
-    humidity = 0
-    pressure = 0
-    dew_point = 0
-    timestamp = 0
+        if config['sensor_type'] == 'bme280' or config['sensor_type'] == 'dht22':
+            wdt = WDT(timeout=120000)
+        if config['sensor_type'] == 'pms5003':
+            wdt = WDT(timeout=600000)
 
     while True:
         logger.log('Reading sensor...')
 
         try:
             if config['sensor_type'] == 'dht22':
-                sensor = dht.DHT22(Pin(config['tx_pin']))
+                sensor = dht.DHT22(Pin(config['rx_pin']))
                 sensor.measure()
 
                 temperature = sensor.temperature()
@@ -78,12 +76,25 @@ async def read_sensor(client):
                 if config['disable_watchdog'] is not True:
                     wdt.feed()
 
+            elif config['sensor_type'] == 'pms5003':
+                current_data = await pms5003.read_data(client)
+                current_data['timestamp'] = (utime.time() + 946684800) * 1000
+
+                await publish_sensor_reading(reading=current_data, client=client)
+
+                if config['disable_watchdog'] is not True:
+                    wdt.feed()
+
             gc.collect()
 
         except Exception as e:
-            await logger.publish_log_message(message={'error': f'Failed to read sensor, error was: {str(e)}'}, client=client)
+            await logger.publish_error_message(message='Failed to read sensor', exception=e, client=client)
 
-        await asyncio.sleep(30)
+        if config['sensor_type'] == 'bme280' or config['sensor_type'] == 'dht22':
+            await asyncio.sleep(30)
+
+        if config['sensor_type'] == 'pms5003':
+            await asyncio.sleep(180)
 
 async def publish_sensor_reading(reading, client):
-    await client.publish(config['topic'], ujson.dumps(reading), qos = 1, retain = True)
+    await client.publish(config['topic'], ujson.dumps(reading), qos=1, retain=True)

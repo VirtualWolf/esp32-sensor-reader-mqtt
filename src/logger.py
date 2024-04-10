@@ -1,3 +1,6 @@
+import io
+import sys
+import gc
 import utime
 import ujson
 from config import config
@@ -19,4 +22,17 @@ async def publish_log_message(message, client, retain=False):
             message['config'].update({'github_token': '********'})
 
     log(message)
-    await client.publish(config['logs_topic'], ujson.dumps(message), qos = 1, retain=retain)
+    await client.publish(config['logs_topic'], ujson.dumps(message), qos=1, retain=retain)
+
+async def publish_error_message(message, exception, client):
+    buf = io.StringIO()
+    sys.print_exception(exception, buf)
+
+    error = {
+        'traceback': buf.getvalue(),
+        'error': message,
+    }
+
+    gc.collect()
+
+    await client.publish(config['logs_topic'], ujson.dumps(error), qos=1)

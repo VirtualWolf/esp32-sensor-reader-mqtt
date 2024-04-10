@@ -15,7 +15,7 @@ config['will']                          = f"logs/{c.get('client_id')}", '{"statu
 # Settings for the sensor reading
 config['topic']                         = c.get('topic')
 config['sensor_type']                   = c.get('sensor_type', 'dht22')
-config['tx_pin']                        = c.get('tx_pin', 26)
+config['rx_pin']                        = c.get('rx_pin', 26)
 config['sda_pin']                       = c.get('sda_pin', 23)
 config['scl_pin']                       = c.get('scl_pin', 22)
 config['ntp_server']                    = c.get('ntp_server', 'time.cloudflare.com')

@@ -24,8 +24,8 @@
       private: false
 
     - name: sensor_type
-      prompt: What is the sensor type? (bme280/dht22)
-      default: bme280
+      prompt: What is the sensor type? (dht22/bme280/pms5003)
+      default: dht22
       private: false
 
     - name: disable_watchdog

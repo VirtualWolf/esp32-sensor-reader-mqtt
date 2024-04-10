@@ -1,21 +1,29 @@
 - name: Copy code to ESP32 board
   hosts: localhost
   vars_prompt:
-    - name: board
-      prompt: What is the ESP32 board type? (huzzah32/um_feathers2)
-      default: huzzah32
-      private: false
-
     - name: mqtt_client_id
       prompt: What is the MQTT client_id?
       private: false
-
-    - name: sensor_type
-      prompt: What is the sensor type? (dht22/bme280)
-      private: false
   vars:
     mqtt_broker_address: 10.0.1.201
-    mqtt_publish_topic: "home/{{ mqtt_client_id }}/weather"
+    mqtt_publish_topic: |-
+      {%- if mqtt_client_id == 'airquality' -%}
+        home/outdoor/airquality
+      {%- elif mqtt_client_id == 'indoor-airquality' -%}
+        home/indoor/airquality
+      {%- else -%}
+        home/{{ mqtt_client_id }}/weather
+      {%- endif -%}
+    sensor_type: |-
+      {%- if mqtt_client_id == 'outdoor' or mqtt_client_id == 'indoor' -%}
+        bme280
+      {%- elif mqtt_client_id is search('airquality') -%}
+        pms5003
+      {%- else -%}
+        dht22
+      {%- endif -%}
     enable_bme280_additional_data: "{{ true if mqtt_client_id == 'outdoor' else false }}"
+    board: huzzah32
+    disable_watchdog: false
   roles:
     - copy_code
