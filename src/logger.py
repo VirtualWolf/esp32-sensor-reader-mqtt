@@ -35,4 +35,5 @@ async def publish_error_message(message, exception, client):
 
     gc.collect()
 
+    log(error)
     await client.publish(config['logs_topic'], ujson.dumps(error), qos=1)
