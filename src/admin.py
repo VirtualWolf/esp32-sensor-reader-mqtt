@@ -1,6 +1,7 @@
 from platform import platform
 import gc
 import ujson
+import uos
 from machine import reset
 from config import config
 from update_from_github import Updater
@@ -46,11 +47,19 @@ async def get_system_info(client):
     except OSError:
         commit = 'No .version file found!'
 
+    filesystem_stats = uos.statvfs('/')
+    block_size = filesystem_stats[0]
+    total_blocks = filesystem_stats[2]
+    free_blocks = filesystem_stats[3]
+
+    free_memory = gc.mem_free()
 
     system_info = {
         "version": commit,
         "micropython_version": platform(),
-        "free_memory": gc.mem_free()
+        "free_memory": f'{(free_memory/1024):.2f}KB',
+        "total_space": f'{(block_size * total_blocks)/1024:.0f}KB',
+        "free_space": f'{(block_size * free_blocks)/1024:.0f}KB',
     }
 
     await publish_log_message(message=system_info, client=client)
