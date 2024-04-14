@@ -3,7 +3,7 @@ import gc
 import ujson
 import uos
 from machine import reset
-import ota.update
+from ota import status, update
 import ota.status
 from config import config
 from update_from_github import Updater

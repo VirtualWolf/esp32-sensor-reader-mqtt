@@ -26,4 +26,4 @@
   ansible.builtin.file:
     path: "{{ lookup('env', 'PWD') }}/src/config.json"
     state: absent
-  when: is_production
+  when: is_production is defined and is_production == true

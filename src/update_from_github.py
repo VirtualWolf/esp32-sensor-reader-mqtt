@@ -3,7 +3,7 @@
 
 import os
 import gc
-import urequests
+import mrequests
 from logger import publish_log_message
 
 class Updater:
@@ -24,7 +24,7 @@ class Updater:
 
         gc.collect()
 
-        commits_response = urequests.get(api_commits_url, headers=self.headers)
+        commits_response = mrequests.get(api_commits_url, headers=self.headers)
         commits_json = commits_response.json()
         commit_hash = commits_json[0]['sha'][0:7]
 
@@ -41,7 +41,7 @@ class Updater:
 
         gc.collect()
 
-        response = urequests.get(api_repository_contents_url, headers=self.headers)
+        response = mrequests.get(api_repository_contents_url, headers=self.headers)
         json = response.json()
 
         gc.collect()
@@ -59,27 +59,41 @@ class Updater:
     async def _get_file(self, url, filename):
         gc.collect()
 
-        await publish_log_message(message={'message': f'Fetching {url}'}, client=self.client)
+        await publish_log_message(message={
+            'message': f'Fetching {url}',
+            'mem_free': gc.mem_free(),
+            }, client=self.client)
 
         gc.collect()
 
-        response = urequests.get(url, headers=self.headers)
-        code = response.status_code
+        buf = bytearray(1024)
+
+        response = mrequests.get(url, headers=self.headers)
 
         gc.collect()
 
-        if code == 200:
-            with open(filename, "w") as local_file:
-                local_file.write(response.text)
+        if response.status_code == 200:
+            gc.collect()
+
+            response.save(filename, buf=buf)
+            await publish_log_message(message={
+                'message': f'Sucessfully saved {filename}',
+                'mem_free': gc.mem_free(),
+                }, client=self.client)
+
+            gc.collect()
+
         else:
-            await publish_log_message(message={'error': f'Failed to get {filename}, status code was {code}'}, client=self.client)
+            await publish_log_message(message={'error': f'Failed to get {filename}, status code was {response.status_code}'}, client=self.client)
+
+        response.close()
 
     async def _get_dir(self, url, dir_name):
         await publish_log_message(message={'message': f'Getting directory {dir_name}'}, client=self.client)
 
         gc.collect()
 
-        response = urequests.get(url, headers=self.headers)
+        response = mrequests.get(url, headers=self.headers)
         json = response.json()
 
         gc.collect()
