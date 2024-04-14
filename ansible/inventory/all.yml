@@ -6,8 +6,6 @@ all:
       ssid: "{{ lookup('community.general.onepassword', 'UniFi Dream Router', section='Primary network', field='ssid') }}"
       ssid_password: "{{ lookup('community.general.onepassword', 'UniFi Dream Router', section='Primary network', field='password') }}"
 
-      micropython_version: 20240222-v1.22.2
-
       boards:
         # Adafruit HUZZAH32: https://www.adafruit.com/product/3405
         huzzah32:
@@ -26,3 +24,6 @@ all:
           esptool_options: "--after no_reset"
           sda_pin: 8
           scl_pin: 9
+
+      micropython_version: 20240222-v1.22.2
+      full_firmware_filename: "{{ boards[board].firmware_filename }}-OTA-{{ micropython_version }}.app-bin"

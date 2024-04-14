@@ -88,7 +88,7 @@ async def read_sensor(client):
             gc.collect()
 
         except Exception as e:
-            await logger.publish_error_message(message='Failed to read sensor', exception=e, client=client)
+            await logger.publish_error_message(error={'error': 'Failed to read sensor'}, exception=e, client=client)
 
         if config['sensor_type'] == 'bme280' or config['sensor_type'] == 'dht22':
             await asyncio.sleep(30)

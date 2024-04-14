@@ -1,5 +1,10 @@
 # Overview
-A version of my [esp32-sensor-reader](https://github.com/VirtualWolf/esp32-sensor-reader) combined with [esp32-air-quality-reader-mqtt](https://github.com/VirtualWolf/esp32-air-quality-reader-mqtt) that reads from an attached DHT22 temperature/humidity sensor, Bosch BME280 temperature/humidity/air pressure sensor, or Plantower PMS5003 air quality sensor, and publishes the readings as JSON to a local MQTT broker. Uses Peter Hinch's [mqtt_as.py](https://github.com/peterhinch/micropython-mqtt/blob/master/mqtt_as/README.md) MQTT library, as well as Robert Hammelrath's [BME280](https://github.com/robert-hh/BME280/) library if you're using a BME280 instead of a DHT22.
+A version of my [esp32-sensor-reader](https://github.com/VirtualWolf/esp32-sensor-reader) combined with [esp32-air-quality-reader-mqtt](https://github.com/VirtualWolf/esp32-air-quality-reader-mqtt) that reads from an attached DHT22 temperature/humidity sensor, Bosch BME280 temperature/humidity/air pressure sensor, or Plantower PMS5003 air quality sensor, and publishes the readings as JSON to a local MQTT broker.
+
+Libraries used:
+* Peter Hinch's [mqtt_as.py](https://github.com/peterhinch/micropython-mqtt/blob/master/mqtt_as/README.md) MQTT library
+* Robert Hammelrath's [BME280](https://github.com/robert-hh/BME280/) library if you're using a BME280 instead of a DHT22
+* glenn20's [micropython-esp32-ota](https://github.com/glenn20/micropython-esp32-ota/) for over-the-air firmware updates
 
 # Configuration
 
@@ -141,7 +146,7 @@ For a PMS5003:
 }
 ```
 
-# Checking and updating code and configuration remotely
+# Checking and updating configuration, code, and firmware remotely
 The ESP32 will subscribe to the topic `commands/<CLIENT_ID>` to listen for commands, and will publish log messages to `logs/<CLIENT_ID>`.
 
 For ease of management, an admin UI lives in the [pi-home-dashboard](https://github.com/VirtualWolf/pi-home-dashboard) repository at `/admin.html`.
@@ -203,7 +208,29 @@ Send a message to the `commands/<CLIENT_ID>` topic with the following payload:
 }
 ```
 
-...will pull down the full contents of latest committed code from the `src` directory of the primary branch of this repository on GitHub and will restart the ESP32 when finished. As mentioned above, the location of the code to download can be changed with the `github_username`, `github_repository`, and `github_ref` configuration options.
+And it pull down the full contents of latest committed code from the `src` directory of the primary branch of this repository on GitHub and will restart the ESP32 when finished. As mentioned above, the location of the code to download can be changed with the `github_username`, `github_repository`, and `github_ref` configuration options.
+
+## Updating firmware
+If the version of MicroPython running on the board supports over-the-air updates (meaning it's been flashed with the "Support for OTA" firmware from the [MicroPython download page](https://micropython.org/download/) for your specific board), you can remote update the version of MicroPython itself.
+
+Send a message to the `commands/<CLIENT_ID` topic with the following payload:
+
+```json
+{
+    "command": "update_firmware",
+    "firmware": {
+        "url": "https://micropython.org/resources/firmware/ESP32_GENERIC-OTA-20240222-v1.22.2.app-bin",
+        "size": <size of firmware file in bytes>,
+        "sha256": <SHA256 hash of firmware file>
+    }
+}
+```
+
+And the board will download the given firmware file and update it, verify it, then restart. Upon successful restart the automatic rollback will be cancelled, but if the board doesn't come up correctly it'll revert to the previous version on next hard reset.
+
+For the filename, note the `-OTA-` in the middle indicating it's an OTA-enabled firmware file, and the `.app-bin` extension indicating it's _just_ the MicroPython app image and doesn't include the bootloader or partition table.
+
+For easier updating, use the `/admin.html` page in my [pi-home-dashboard](https://github.com/VirtualWolf/pi-home-dashboard) repository which will calculate the filesize and SHA256 hash, as well as downloading the firmware file locally to use instead of needing to download it afresh from `micropython.org` for every board update you're running.
 
 # Extras
 

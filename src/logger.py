@@ -24,14 +24,12 @@ async def publish_log_message(message, client, retain=False):
     log(message)
     await client.publish(config['logs_topic'], ujson.dumps(message), qos=1, retain=retain)
 
-async def publish_error_message(message, exception, client):
-    buf = io.StringIO()
-    sys.print_exception(exception, buf)
+async def publish_error_message(error, client, exception=None):
+    if exception is not None:
+        buf = io.StringIO()
+        sys.print_exception(exception, buf)
 
-    error = {
-        'traceback': buf.getvalue(),
-        'error': message,
-    }
+        error['traceback'] = buf.getvalue()
 
     gc.collect()
 

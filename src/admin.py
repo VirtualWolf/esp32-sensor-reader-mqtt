@@ -3,6 +3,8 @@ import gc
 import ujson
 import uos
 from machine import reset
+import ota.update
+import ota.status
 from config import config
 from update_from_github import Updater
 from logger import publish_log_message, publish_error_message
@@ -26,10 +28,14 @@ async def messages(client):
 
                 elif payload['command'] == 'update_code':
                     await start_code_update(client)
+
+                elif payload['command'] == 'update_firmware' and 'firmware' in payload:
+                    await start_firmware_update(firmware=payload.get('firmware'), client=client)
+
         except ValueError as e:
-            await publish_error_message(message=f'Received payload was not JSON: {msg.decode()}', exception=e, client=client)
+            await publish_error_message(error={'error': f'Received payload was not JSON: {msg.decode()}'}, exception=e, client=client)
         except Exception as e:
-            await publish_error_message(message='Something went wrong', exception=e, client=client)
+            await publish_error_message(error={'error': 'Something went wrong'}, exception=e, client=client)
 
 
 async def get_config(client):
@@ -101,7 +107,7 @@ async def update_config(incoming_config, client):
 
         reset()
     except Exception as e:
-        await publish_error_message(message='Failed to update configuration', exception=e, client=client)
+        await publish_error_message(error={'error': 'Failed to update configuration'}, exception=e, client=client)
 
 
 async def start_code_update(client):
@@ -110,7 +116,7 @@ async def start_code_update(client):
 
         gc.collect()
 
-        OTA = Updater(
+        config_updater = Updater(
             username=config['github_username'],
             api_token=config['github_token'],
             repository=config['github_repository'],
@@ -118,7 +124,7 @@ async def start_code_update(client):
             client=client,
         )
 
-        await OTA.update()
+        await config_updater.update()
 
         await publish_log_message(message={
             'message': 'Code update successful, restarting board...',
@@ -127,4 +133,49 @@ async def start_code_update(client):
 
         reset()
     except Exception as e:
-        await publish_error_message(message='Failed to run OTA.update()', exception=e, client=client)
+        await publish_error_message(error={'error': 'Failed to run update code'}, exception=e, client=client)
+
+async def start_firmware_update(firmware, client):
+    if ota.status.ready() is not True:
+        await publish_error_message(error={'error': 'Board cannot be updated over the air, make sure it has been flashed with an OTA-enabled image'}, client=client)
+        return
+
+    if firmware is None:
+        await publish_error_message(error={'error': 'Missing payload'}, client=client)
+        return
+
+    url = firmware.get('url')
+    size = firmware.get('size')
+    sha256 = firmware.get('sha256')
+
+    if url is None or sha256 is None or size is None:
+        await publish_error_message(error={'error': "url, size, or sha256 field(s) missing from payload"}, client=client)
+        return
+
+    await publish_log_message(message={
+        'message': f'Beginning firmware update from {url}...',
+        'update_status': 'updating',
+    }, client=client)
+
+    try:
+        gc.collect()
+
+        ota.update.from_file(url, sha=sha256, length=size, reboot=False)
+
+        await publish_log_message(message={
+            'message': f'Sucessfully updated firmware from {url}, restarting...',
+            'update_status': 'updated',
+            'status': 'offline',
+        }, client=client)
+
+        reset()
+    except ValueError as e:
+        await publish_error_message(error={
+            'error': 'Failed to update firmware, OTA returned an error',
+            'update_status': 'failed',
+        }, exception=e, client=client)
+    except Exception as e:
+        await publish_error_message(error={
+            'error': 'Failed to update firmware, something went wrong',
+            'update_status': 'failed',
+        }, exception=e, client=client)
