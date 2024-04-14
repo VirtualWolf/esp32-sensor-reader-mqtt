@@ -26,4 +26,4 @@ all:
           scl_pin: 9
 
       micropython_version: 20240222-v1.22.2
-      full_firmware_filename: "{{ boards[board].firmware_filename }}-OTA-{{ micropython_version }}.app-bin"
+      full_firmware_filename: "{{ boards[board].firmware_filename }}-OTA-{{ micropython_version }}.bin"

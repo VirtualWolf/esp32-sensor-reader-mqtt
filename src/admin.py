@@ -66,6 +66,7 @@ async def get_system_info(client):
         "free_memory": f'{(free_memory/1024):.2f}KB',
         "total_space": f'{(block_size * total_blocks)/1024:.0f}KB',
         "free_space": f'{(block_size * free_blocks)/1024:.0f}KB',
+        "micropython_ota_updates_supported": ota.status.ready(),
     }
 
     await publish_log_message(message=system_info, client=client)

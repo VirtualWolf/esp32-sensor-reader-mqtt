@@ -4,6 +4,10 @@
     - name: mqtt_client_id
       prompt: What is the MQTT client_id?
       private: false
+    - name: flash_board
+      prompt: Flash the board first? (yes/no)
+      default: false
+      private: false
   vars:
     mqtt_broker_address: 10.0.1.201
     mqtt_publish_topic: |-
@@ -25,5 +29,8 @@
     enable_bme280_additional_data: "{{ true if mqtt_client_id == 'outdoor' else false }}"
     board: huzzah32
     disable_watchdog: false
+    is_production: true
   roles:
+    - role: flash_board
+      when: flash_board | bool
     - copy_code

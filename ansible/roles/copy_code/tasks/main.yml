@@ -20,3 +20,10 @@
   ansible.builtin.command:
     chdir: "{{ lookup('env', 'PWD') }}/src"
     cmd: "mpremote connect port:{{ boards[board].serial_port }} cp -r . : + reset"
+
+- name: Delete local config.json after production run
+  delegate_to: localhost
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'PWD') }}/src/config.json"
+    state: absent
+  when: is_production
