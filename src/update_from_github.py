@@ -24,13 +24,15 @@ class Updater:
 
         gc.collect()
 
-        commits_response = mrequests.get(api_commits_url, headers=self.headers)
-        commits_json = commits_response.json()
-        commit_hash = commits_json[0]['sha'][0:7]
+        response = mrequests.get(api_commits_url, headers=self.headers)
+        json = response.json()
+        response.close()
 
-        await publish_log_message(message={'message': f'Latest commit hash is {commit_hash}, writing to .version file...'}, client=self.client)
+        commit_hash = json[0]['sha'][0:7]
 
         gc.collect()
+
+        await publish_log_message(message={'message': f'Latest commit hash is {commit_hash}, writing to .version file...'}, client=self.client)
 
         with open('.version', 'w') as file:
             file.write(commit_hash[0:7])
@@ -43,6 +45,7 @@ class Updater:
 
         response = mrequests.get(api_repository_contents_url, headers=self.headers)
         json = response.json()
+        response.close()
 
         gc.collect()
 
@@ -57,8 +60,6 @@ class Updater:
             await self._get_dir(file['url'], file['name'])
 
     async def _get_file(self, url, filename):
-        gc.collect()
-
         await publish_log_message(message={
             'message': f'Fetching {url}',
             'mem_free': gc.mem_free(),
@@ -81,12 +82,11 @@ class Updater:
                 'mem_free': gc.mem_free(),
                 }, client=self.client)
 
-            gc.collect()
-
         else:
             await publish_log_message(message={'error': f'Failed to get {filename}, status code was {response.status_code}'}, client=self.client)
 
         response.close()
+        gc.collect()
 
     async def _get_dir(self, url, dir_name):
         await publish_log_message(message={'message': f'Getting directory {dir_name}'}, client=self.client)
@@ -95,6 +95,7 @@ class Updater:
 
         response = mrequests.get(url, headers=self.headers)
         json = response.json()
+        response.close()
 
         gc.collect()
 
