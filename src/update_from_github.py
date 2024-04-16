@@ -60,6 +60,8 @@ class Updater:
             await self._get_dir(file['url'], file['name'])
 
     async def _get_file(self, url, filename):
+        gc.collect()
+
         await publish_log_message(message={
             'message': f'Fetching {url}',
             'mem_free': gc.mem_free(),
@@ -77,10 +79,15 @@ class Updater:
             gc.collect()
 
             response.save(filename, buf=buf)
+
+            gc.collect()
+
             await publish_log_message(message={
                 'message': f'Sucessfully saved {filename}',
                 'mem_free': gc.mem_free(),
                 }, client=self.client)
+
+            gc.collect()
 
         else:
             await publish_log_message(message={'error': f'Failed to get {filename}, status code was {response.status_code}'}, client=self.client)
