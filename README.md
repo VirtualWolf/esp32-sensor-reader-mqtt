@@ -201,6 +201,17 @@ To _remove_ a configuration option, send the configuration option with an empty 
 
 Note that the _required_ options (`client_id`, `server`, `port`, `topic`, `ssid`, and `wifi_pw`) cannot be deleted, only updated to new values.
 
+## Restarting the board
+Send a message to the `commands/<CLIENT_ID>` topic with the following payload:
+
+```json
+{
+    "command": "restart"
+}
+```
+
+And the board will run a `machine.reset()` and restart itself.
+
 ## Updating code
 Send a message to the `commands/<CLIENT_ID>` topic with the following payload:
 

@@ -32,6 +32,13 @@ async def messages(client):
                 elif payload['command'] == 'update_firmware' and 'firmware' in payload:
                     await start_firmware_update(firmware=payload.get('firmware'), client=client)
 
+                elif payload['command'] == 'restart':
+                    await publish_log_message(message={
+                        'message': 'Restarting...',
+                        'status': 'offline',
+                    }, client=client)
+                    reset()
+
         except ValueError as e:
             await publish_error_message(error={'error': f'Received payload was not JSON: {msg.decode()}'}, exception=e, client=client)
         except Exception as e:
