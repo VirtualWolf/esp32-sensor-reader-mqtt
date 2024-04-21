@@ -20,7 +20,7 @@ config['sda_pin']                       = c.get('sda_pin', 23)
 config['scl_pin']                       = c.get('scl_pin', 22)
 config['ntp_server']                    = c.get('ntp_server', 'time.cloudflare.com')
 config['disable_watchdog']              = c.get('disable_watchdog', False)
-config['enable_bme280_additional_data'] = c.get('enable_bme280_additional_data', True)
+config['sensors']                       = c.get('sensors', [])
 
 # Settings for GitHub updates
 config['github_token']                  = c.get('github_token', None)

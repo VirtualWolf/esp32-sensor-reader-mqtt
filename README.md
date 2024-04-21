@@ -1,5 +1,5 @@
 # Overview
-A version of my [esp32-sensor-reader](https://github.com/VirtualWolf/esp32-sensor-reader) combined with [esp32-air-quality-reader-mqtt](https://github.com/VirtualWolf/esp32-air-quality-reader-mqtt) that reads from an attached DHT22 temperature/humidity sensor, Bosch BME280 temperature/humidity/air pressure sensor, or Plantower PMS5003 air quality sensor, and publishes the readings as JSON to a local MQTT broker.
+A version of my [esp32-sensor-reader](https://github.com/VirtualWolf/esp32-sensor-reader) combined with [esp32-air-quality-reader-mqtt](https://github.com/VirtualWolf/esp32-air-quality-reader-mqtt) that reads from an attached DHT22 temperature/humidity sensor, Bosch BME280 temperature/humidity/air pressure sensor, Plantower PMS5003 air quality sensor, or ScioSense ENS160 air quality sensor, and publishes the readings as JSON to a local MQTT broker.
 
 Libraries used:
 * Peter Hinch's [mqtt_as.py](https://github.com/peterhinch/micropython-mqtt/blob/master/mqtt_as/README.md) MQTT library
@@ -7,6 +7,7 @@ Libraries used:
 * glenn20's [micropython-esp32-ota](https://github.com/glenn20/micropython-esp32-ota/) for over-the-air firmware updates
 * Jakub Bednarski's [senko](https://github.com/RangerDigital/senko/) as the original basis from the [update_from_github.py](src/update_from_github.py) code
 * Christopher Arndt's [mrequests](https://github.com/SpotlightKid/mrequests) for ease of streaming files from GitHub to flash to avoid the memory issues of regular `requests`
+* A slightly modified version of Lukasz Awsiukiewicz's [ENS160](https://github.com/awsiuk/ENS160) library
 
 # Configuration
 
@@ -17,15 +18,15 @@ Requires a file called `config.json` inside `src` with the following contents:
     "client_id": "<client-id>",
     "server": "<broker-address>",
     "port": 1883,
-    "topic": "<topic to publish to>",
     "ssid": "<wifi network name>",
-    "wifi_pw": "<wifi password>"
+    "wifi_pw": "<wifi password>",
+    "sensors": [...]
 }
 ```
 
-If you don't otherwise specify anything beyond the settings above, the code assumes you're using a DHT22 sensor connected to GPIO pin 26.
+The `sensors` array needs to be filled out as described below depending on which type of sensor(s) you have attached to the ESP32.
 
-Copy the whole contents of the `src` directory to the board with [mpremote](https://docs.micropython.org/en/latest/reference/mpremote.html) and restart it when it's finished:
+Once configured, copy the whole contents of the `src` directory to the board with [mpremote](https://docs.micropython.org/en/latest/reference/mpremote.html) and restart it when it's finished:
 
 ```
 $ cd src
@@ -38,46 +39,97 @@ Alternatively you can adapt the [Ansible runbooks described below](#ansible-runb
 
 ## DHT22 temperature/humidity sensor
 
-The only configuration options for the DHT22 are `sensor_type` (if you want to be explicit instead of relying on the default) and `rx_pin`, which defaults to 26 if not otherwise set:
+For a DHT22 sensor, you'll need set the sensor type, the data pin it's attached to, and the topic to publish the data to:
 
 ```json
-    "sensor_type": "dht22",
-    "rx_pin": 25
+    "sensors": [
+        {
+            "type": "dht22",
+            "rx_pin": 26,
+            "topic": "home/outdoor/weather"
+        }
+    ]
 ```
 
 ## BME280 temperature/humidity/air pressure sensor
 
-If you're using a BME280 sensor instead of a DHT22, you'll need to specify the sensor type:
+For a BME280, you'll need to specify the sensor type, the I2C address of the sensor, and topic to publish to. You can also explicitly set the I2C SDA and SCL pins if needed (these default to 23 and 22 respectively if not specified):
 
 ```json
-    "sensor_type": "bme280",
-```
-
-The default SDA and SCL pins if not specified are 23 and 22 respectively, these can be changed if needed:
-
-```json
+    "sensors": [
+        {
+            "type": "bme280",
+            "i2c_address": 119,
+            "topic": "home/outdoor/weather"
+        }
+    ],
     "sda_pin": 19,
     "scl_pin": 18
 ```
 
-If you're using several ESP32s with BME280s, you might not care about the atmospheric pressure and dew point data for any that aren't located outside, in which case you can disable those datapoints from being sent to the MQTT broker:
+If you're using several ESP32s with BME280s, you might not care about the atmospheric pressure and dew point data for any that aren't located outside, in which case you can disable those datapoints from being sent to the MQTT broker by setting `enable_addtional_data` to `false`:
 
 ```json
-    "enable_bme280_additional_data": false
+    "sensors": [
+        {
+            "type": "bme280",
+            "i2c_address": 119,
+            "topic": "home/indoor/weather",
+            "enable_addtional_data": false
+        }
+    ],
 ```
 
 ## PMS5003 air quality sensor
 
-If you have a PMS5003 air quality sensor hooked up, you'll need to set the sensor type:
+For a PMS5003 sensor, you'll need set the sensor type, the data pin it's attached to, and the topic to publish the data to:
 
 ```json
-    "sensor_type": "pms5003"
+    "sensors": [
+        {
+            "type": "pms5003",
+            "rx_pin": 26,
+            "topic": "home/outdoor/airquality"
+        }
+    ]
+```
+## ENS160 air quality sensor
+
+If you're using a ENS160 sensor, you'll need to specify the sensor type, I2C address of the sensor, and topic to publish to. You can also explicitly set the I2C SDA and SCL pins if needed (these default to 23 and 22 respectively if not specified):
+
+```json
+    "sensors": [
+        {
+            "type": "ens160",
+            "i2c_address": 83,
+            "topic": "home/indoor/airquality"
+        }
+    ],
+    "sda_pin": 19,
+    "scl_pin": 18
 ```
 
-As with the DHT22, the RX pin can be set explicitly if you're not using the default of 26:
+The ENS160 has built-in calibration based on temperature and humidity readings, if you're using it by itself it will always use values of 25˚C and 50% relative humidity but you have a DHT22 or BME280 attached as well, it will calibrate itself based on the values read from that sensor.
+
+## Using multiple sensors
+
+If you have multiple sensor attached to a single board, you can add additional objects to the `sensors` array:
 
 ```json
-    "rx_pin": 25
+    "sensors": [
+        {
+            "type": "bme280",
+            "i2c_address": 119,
+            "topic": "home/indoor/weather"
+        },
+        {
+            "type": "ens160",
+            "i2c_address": 83,
+            "topic": "home/indoor/airquality"
+        }
+    ],
+    "sda_pin": 19,
+    "scl_pin": 18
 ```
 
 ## Other options
@@ -88,7 +140,7 @@ You can use your own NTP server instead of `time.cloudflare.com` for time settin
     "ntp_server": "10.0.0.1"
 ```
 
-By default, the board will restart itself automatically if it's not able to either read the sensor or publish to the MQTT topic after a period of time (two minutes if using a DHT22 or BME280 sensor, ten minutes for the PMS5003). You can override this by setting the `disable_watchdog` option:
+By default, the board will restart itself automatically if it's not able to either read the sensor or publish to the MQTT topic after a period of time (ten minutes for the PMS5003, two minutes for any other sensor). You can override this by setting the `disable_watchdog` option:
 
 ```json
     "disable_watchdog": true
@@ -145,6 +197,17 @@ For a PMS5003:
     "particles_2_5um": <number>,
     "particles_5_0um": <number>,
     "particles_10um": <number>
+}
+```
+
+For an ENS160:
+
+```json
+{
+    "timestamp": <epoch time in milliseconds>,
+    "aqi": <number>,
+    "tvoc": <number>,
+    "eco2": <number>
 }
 ```
 
