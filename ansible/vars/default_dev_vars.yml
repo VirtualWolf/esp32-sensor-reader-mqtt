@@ -1,7 +1,0 @@
-mqtt_client_id: dev
-board: huzzah32
-mqtt_broker_address: "{{lookup('pipe','hostname')}}"
-mqtt_publish_topic: "home/{{ mqtt_client_id }}/weather"
-sensor_type: dht22
-disable_watchdog: true
-enable_bme280_additional_data: true
