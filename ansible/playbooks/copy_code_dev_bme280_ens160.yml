@@ -5,8 +5,12 @@
     board: huzzah32
     mqtt_broker_address: "{{lookup('pipe','hostname')}}"
     sensors:
-      - type: pms5003
-        rx_pin: 26
+      - type: bme280
+        i2c_address: 119
+        enable_additional_data: true
+        topic: "home/{{ mqtt_client_id }}/weather"
+      - type: ens160
+        i2c_address: 83
         topic: "home/{{ mqtt_client_id }}/airquality"
     disable_watchdog: true
   roles:
