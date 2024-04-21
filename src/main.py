@@ -2,7 +2,7 @@ import ntptime
 from machine import Pin, Timer, reset
 import uasyncio as asyncio
 from mqtt import MQTTClient, config as mqtt_config
-import ota.rollback, ota.status
+from lib.ota import rollback, status
 from config import config
 import sensor
 import admin
@@ -41,9 +41,9 @@ async def up(client):
         await logger.publish_log_message({'status': "online"}, client=client, retain=True)
 
         # Verify that the board supports OTA updates
-        if ota.status.ready() is True:
+        if status.ready() is True:
             # Everything has started up successfully so we can cancel the automatic rollback on reboot
-            ota.rollback.cancel()
+            rollback.cancel()
 
 async def down(client):
     while True:

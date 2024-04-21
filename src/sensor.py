@@ -6,9 +6,9 @@ import ujson
 import uasyncio as asyncio
 import logger
 from config import config
-import bme280_float as bme280
-import ens160
-import pms5003
+from lib import ens160
+from lib import bme280_float as bme280
+from lib import pms5003
 
 # Global variables to hold the temperature and humidity for calibrating the ENS160
 temperature_calibration = 25

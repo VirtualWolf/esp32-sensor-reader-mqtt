@@ -3,7 +3,7 @@
 
 import os
 import gc
-import mrequests
+from lib import mrequests
 from logger import publish_log_message
 
 class Updater:
@@ -18,8 +18,6 @@ class Updater:
             self.headers[b'Authorization'] = 'token {}'.format(api_token)
 
         self.client = client
-
-
 
     async def _get_repository_contents(self, api_repository_contents_url):
         await publish_log_message(message={'message': 'Getting repository contents from {}'.format(api_repository_contents_url)}, client=self.client)

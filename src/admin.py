@@ -3,11 +3,10 @@ import gc
 import ujson
 import uos
 from machine import reset
-from ota import status, update
-import ota.status
 from config import config
 from update_from_github import Updater
 from logger import publish_log_message, publish_error_message
+from lib.ota import status, update
 
 async def messages(client):
     async for topic, msg, retained in client.queue:
@@ -73,7 +72,7 @@ async def get_system_info(client):
         "free_memory": f'{(free_memory/1024):.2f}KB',
         "total_space": f'{(block_size * total_blocks)/1024:.0f}KB',
         "free_space": f'{(block_size * free_blocks)/1024:.0f}KB',
-        "micropython_ota_updates_supported": ota.status.ready(),
+        "micropython_updates_supported": status.ready(),
     }
 
     await publish_log_message(message=system_info, client=client)
@@ -144,7 +143,7 @@ async def start_code_update(client):
         await publish_error_message(error={'error': 'Failed to run update code'}, exception=e, client=client)
 
 async def start_firmware_update(firmware, client):
-    if ota.status.ready() is not True:
+    if status.ready() is not True:
         await publish_error_message(error={'error': 'Board cannot be updated over the air, make sure it has been flashed with an OTA-enabled image'}, client=client)
         return
 
@@ -168,7 +167,7 @@ async def start_firmware_update(firmware, client):
     try:
         gc.collect()
 
-        ota.update.from_file(url, sha=sha256, length=size, reboot=False)
+        update.from_file(url, sha=sha256, length=size, reboot=False)
 
         await publish_log_message(message={
             'message': f'Sucessfully updated firmware from {url}, restarting...',
