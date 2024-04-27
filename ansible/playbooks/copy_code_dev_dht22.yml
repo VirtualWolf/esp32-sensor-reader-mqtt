@@ -1,7 +1,15 @@
-- name: Copy code to ESP32 board
+- name: Configure board for DHT22 sensor
   hosts: localhost
+  vars_prompt:
+    - name: flash_board
+      prompt: Flash the board first? (yes/no)
+      default: false
+      private: false
+    - name: mqtt_client_id
+      prompt: What is the MQTT client_id?
+      default: dev
+      private: false
   vars:
-    mqtt_client_id: dev
     board: huzzah32
     mqtt_broker_address: "{{lookup('pipe','hostname')}}"
     sensors:
@@ -10,4 +18,6 @@
         topic: "home/{{ mqtt_client_id }}/weather"
     disable_watchdog: true
   roles:
+    - role: flash_board
+      when: flash_board | bool
     - copy_code
