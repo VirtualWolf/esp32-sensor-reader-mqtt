@@ -1,8 +1,14 @@
-- name: Download Micropython version
+- name: Check for existing MicroPython firmware
+  ansible.builtin.stat:
+    path: "{{ lookup('env','PWD') }}/downloads/{{ full_firmware_filename }}"
+  register: firmware_file
+
+- name: Download MicroPython version
   delegate_to: localhost
   ansible.builtin.get_url:
     url: "https://micropython.org/resources/firmware/{{ full_firmware_filename }}"
-    dest: "/tmp"
+    dest: "{{ lookup('env','PWD') }}/downloads"
+  when: firmware_file.exists is false
 
 - name: Prompt for download mode for FeatherS2
   ansible.builtin.pause:
@@ -24,7 +30,7 @@
 
 - name: Flash Micropython to board
   delegate_to: localhost
-  ansible.builtin.command: "esptool.py --chip {{ boards[board].chip }} --port {{ boards[board].download_mode_serial_port | default(boards[board].serial_port) }} {{ boards[board].esptool_options | default('') }} write_flash -z 0x1000 /tmp/{{ full_firmware_filename }}"
+  ansible.builtin.command: "esptool.py --chip {{ boards[board].chip }} --port {{ boards[board].download_mode_serial_port | default(boards[board].serial_port) }} {{ boards[board].esptool_options | default('') }} write_flash -z 0x1000 {{ lookup('env','PWD') }}/{{ full_firmware_filename }}"
   register: esptool_flash
 
 - debug: var=esptool_flash.stdout_lines
