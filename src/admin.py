@@ -87,7 +87,7 @@ async def update_config(incoming_config, client):
         config_key = next(iter(incoming_config.keys()))
         config_value = next(iter(incoming_config.values()))
 
-        required_config_keys = ['client_id', 'server', 'port', 'ssid', 'wifi_pw', 'topic']
+        required_config_keys = ['client_id', 'server', 'port', 'ssid', 'wifi_pw']
 
         if config_key in required_config_keys and not config_value:
             await publish_log_message(message={

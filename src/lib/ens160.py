@@ -1,6 +1,11 @@
-import time
+# This code is primarily Lukasz Awsiukiewicz's original library at https://github.com/awsiuk/ENS160/
+# Minor changes have been made to allow selection of I2C pins and sensor address, and the optional
+# ability to feed in temperature and humidity values for calibration rather than defaulting to 25˚C
+# and 50% humidity.
+#
+# Sensor datasheet can be found at https://www.sciosense.com/wp-content/uploads/2023/12/ENS160-Datasheet.pdf
 
-# Datasheet can be found at https://www.sciosense.com/wp-content/uploads/2023/12/ENS160-Datasheet.pdf
+import time
 
 ## ENS160 chip version
 ENS160PART_ID = 0x160
@@ -47,7 +52,7 @@ class ENS160:
 
             self.i2c.writeto_mem(self.ENS160ADDR, ENS160OPMODE_REG, buf)
 
-            time.sleep(0.2)
+            time.sleep(0.025)
 
             self.calibrate_temperature(self.temperature)
             self.calibrate_humidity(self.humidity)
@@ -67,7 +72,7 @@ class ENS160:
 
         self.i2c.writeto_mem(self.ENS160ADDR, ENS160TEMP_IN_REG, buf)
 
-        time.sleep(0.2)
+        time.sleep(0.025)
 
     def calibrate_humidity(self, humidity):
         #doing calculations based on chip documentation on page 27
@@ -78,26 +83,11 @@ class ENS160:
         buf[1] = (humidity and 0xFF00) >> 8
 
         self.i2c.writeto_mem(self.ENS160ADDR, ENS160RH_IN_REG, buf)
-        time.sleep(0.2)
-
-    def getAQI(self):
-        buf = self.i2c.readfrom_mem(self.ENS160ADDR, ENS160DATA_AQI_REG, 1)
-
-        return (buf[0])
-
-    def getTVOC(self):
-        buf = self.i2c.readfrom_mem(self.ENS160ADDR, ENS160DATA_TVOC_REG, 2)
-
-        return (buf[1]<<8 | buf[0])
-
-    def getECO2(self):
-        buf = self.i2c.readfrom_mem(self.ENS160ADDR, ENS160DATA_ECO2_REG, 2)
-
-        return (buf[1]<<8 | buf[0])
+        time.sleep(0.025)
 
     def get_readings(self):
-        aqi = self.getAQI()
-        tvoc = self.getTVOC()
-        eco2 = self.getECO2()
+        aqi = self.i2c.readfrom_mem(self.ENS160ADDR, ENS160DATA_AQI_REG, 1)
+        tvoc = self.i2c.readfrom_mem(self.ENS160ADDR, ENS160DATA_TVOC_REG, 2)
+        eco2 = self.i2c.readfrom_mem(self.ENS160ADDR, ENS160DATA_ECO2_REG, 2)
 
-        return (aqi, tvoc, eco2)
+        return (aqi[0], (tvoc[1]<<8 | tvoc[0]), (eco2[1]<<8 | eco2[0]))

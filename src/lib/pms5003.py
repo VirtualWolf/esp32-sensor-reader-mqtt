@@ -9,7 +9,7 @@ async def read_data(client):
     logger.log('Initialising UART bus')
 
     uart = UART(1, 9600)
-    uart.init(9600, bits=8, parity=None, rx=config['rx_pin'], timeout=250)
+    uart.init(9600, bits=8, parity=None, rx=int(config['rx_pin']), timeout=250)
 
     count = 0
 

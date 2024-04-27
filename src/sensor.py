@@ -36,7 +36,7 @@ async def read_sensor(client):
         sensor_ens160 = False
 
     if sensor_bme280 or sensor_ens160:
-        i2c = I2C(0, sda=Pin(config['sda_pin']), scl=Pin(config['scl_pin']))
+        i2c = I2C(0, sda=Pin(int(config['sda_pin'])), scl=Pin(int(config['scl_pin'])), timeout=50000)
 
     if config['disable_watchdog'] is not True:
         if sensor_pms5003:
@@ -54,8 +54,9 @@ async def read_sensor(client):
 
         try:
             if sensor_dht22:
-                sensor = dht.DHT22(Pin(sensor_dht22['rx_pin']))
+                sensor = dht.DHT22(Pin(int(sensor_dht22['rx_pin'])))
                 sensor.measure()
+
 
                 temperature = sensor.temperature()
                 humidity = sensor.humidity()
@@ -79,7 +80,7 @@ async def read_sensor(client):
                     wdt.feed()
 
             if sensor_bme280:
-                sensor = bme280.BME280(i2c=i2c, address=sensor_bme280['i2c_address'])
+                sensor = bme280.BME280(i2c=i2c, address=int(sensor_bme280['i2c_address']))
 
                 (temperature, pressure, humidity) = sensor.read_compensated_data()
                 dew_point = sensor.dew_point
@@ -118,24 +119,27 @@ async def read_sensor(client):
                     wdt.feed()
 
             if sensor_ens160:
-                sensor = ens160.ENS160(i2c=i2c, address=sensor_ens160['i2c_address'], temperature=temperature_calibration, humidity=humidity_calibration)
+                sensor = ens160.ENS160(i2c=i2c, address=int(sensor_ens160['i2c_address']), temperature=temperature_calibration, humidity=humidity_calibration)
 
                 (aqi, tvoc, eco2) = sensor.get_readings()
                 timestamp = (utime.time() + 946684800) * 1000
 
                 logger.log('Sensor read at {}. AQI {}, TVOC {}, ECO2 {}'.format(timestamp, aqi, tvoc, eco2))
 
-                current_data = {
-                    'timestamp': timestamp,
-                    'aqi': aqi,
-                    'tvoc': tvoc,
-                    'eco2': eco2,
-                }
+                if aqi == 0:
+                    await logger.publish_log_message({'message': 'Received 0 reading for AQI, skipping'}, client=client)
+                else:
+                    current_data = {
+                        'timestamp': timestamp,
+                        'aqi': aqi,
+                        'tvoc': tvoc,
+                        'eco2': eco2,
+                    }
 
-                await publish_sensor_reading(reading=current_data, client=client, topic=sensor_ens160['topic'])
+                    await publish_sensor_reading(reading=current_data, client=client, topic=sensor_ens160['topic'])
 
-                if config['disable_watchdog'] is not True:
-                    wdt.feed()
+                    if config['disable_watchdog'] is not True:
+                        wdt.feed()
 
             gc.collect()
 
