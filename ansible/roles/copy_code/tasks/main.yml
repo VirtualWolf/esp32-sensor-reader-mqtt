@@ -31,13 +31,17 @@
         topic: home/indoor/airquality
   when: is_production is defined and is_production == true and mqtt_client_id == 'indoor'
 
-- name: Configure for production office weather
+- name: Configure for production office weather and air quality
   delegate_to: localhost
   ansible.builtin.set_fact:
     sensors:
-      - type: dht22
-        rx_pin: 26
+      - type: bme280
+        i2c_address: 119
+        enable_additional_data: false
         topic: home/office/weather
+      - type: ens160
+        i2c_address: 83
+        topic: home/office/airquality
   when: is_production is defined and is_production == true and mqtt_client_id == 'office'
 
 - name: Configure for production back room weather
