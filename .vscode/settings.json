@@ -1,9 +1,0 @@
-{
-    "python.analysis.extraPaths": [
-        ".micropy/BradenM-micropy-stubs-371f66d/frozen",
-        ".micropy/BradenM-micropy-stubs-4f5a52a/frozen",
-        ".micropy/BradenM-micropy-stubs-371f66d/stubs",
-        ".micropy/mqtt"
-    ],
-    "python.languageServer": "Pylance"
-}

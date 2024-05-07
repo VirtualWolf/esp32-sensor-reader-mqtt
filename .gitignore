@@ -147,3 +147,5 @@ src/config.json
 src/.version
 
 downloads
+typings
+.vscode
