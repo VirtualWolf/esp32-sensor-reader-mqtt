@@ -10,10 +10,18 @@ all:
         # Adafruit HUZZAH32: https://www.adafruit.com/product/3405
         huzzah32:
           chip: esp32
-          firmware_filename: ESP32_GENERIC
+          firmware_filename: ESP32_GENERIC-OTA
           serial_port: /dev/tty.SLAB_USBtoUART
           sda_pin: 23
           scl_pin: 22
+
+        # Adafruit QT Py ESP32-Pico: https://www.adafruit.com/product/5395
+        qtpy_esp32:
+          chip: esp32
+          firmware_filename: ESP32_GENERIC-SPIRAM
+          serial_port: /dev/tty.usbserial-57930204331
+          sda_pin: 22
+          scl_pin: 19
 
         # Unexpected Maker FeatherS2: https://feathers2.io
         um_feathers2:
@@ -26,4 +34,4 @@ all:
           scl_pin: 9
 
       micropython_version: 20240222-v1.22.2
-      full_firmware_filename: "{{ boards[board].firmware_filename }}-OTA-{{ micropython_version }}.bin"
+      full_firmware_filename: "{{ boards[board].firmware_filename }}-{{ micropython_version }}.bin"
