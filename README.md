@@ -244,6 +244,7 @@ Send a message to the `commands/<CLIENT_ID>` topic with the following payload:
 
 ```json
 {
+    "command": "update_config",
     "config": {
         "server": "<broker-address>"
     }
@@ -256,6 +257,7 @@ To _remove_ a configuration option, send the configuration option with an empty 
 
 ```json
 {
+    "command": "update_config",
     "config": {
         "ntp_server": ""
     }
@@ -263,6 +265,25 @@ To _remove_ a configuration option, send the configuration option with an empty 
 ```
 
 Note that the _required_ options (`client_id`, `server`, `port`, `topic`, `ssid`, and `wifi_pw`) cannot be deleted, only updated to new values.
+
+## Replacing configuration
+To replace the entire configuration of the board all in one go, send a message to the `commands/<CLIENT_ID>` topic with the following payload:
+
+```json
+{
+    "command": "replace_config",
+    "config": {
+        "ssid": "<wifi network name>",
+        "wifi_pw": "<wifi password>",
+        "server": "<broker-address>",
+        "port": 1883,
+        "client_id": "<client-id>",
+        [...]
+    }
+}
+```
+
+The replacement will be rejected if the minimum required keys listed in `config` above aren't set.
 
 ## Restarting the board
 Send a message to the `commands/<CLIENT_ID>` topic with the following payload:

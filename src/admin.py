@@ -25,6 +25,9 @@ async def messages(client):
                 elif payload['command'] == 'update_config' and 'config' in payload:
                     await update_config(incoming_config=payload.get('config'), client=client)
 
+                elif payload['command'] == 'replace_config':
+                    await replace_config(incoming_config=payload.get('config'), client=client)
+
                 elif payload['command'] == 'update_code':
                     await start_code_update(client)
 
@@ -115,6 +118,32 @@ async def update_config(incoming_config, client):
         reset()
     except Exception as e:
         await publish_error_message(error={'error': 'Failed to update configuration'}, exception=e, client=client)
+
+
+
+async def replace_config(incoming_config, client):
+    try:
+        required_config_keys = ['client_id', 'server', 'port', 'ssid', 'wifi_pw']
+
+        if all(key in incoming_config for key in required_config_keys):
+            with open('config.json', 'w') as file:
+               ujson.dump(incoming_config, file)
+
+            await publish_log_message(message={
+                'message': 'Configuration updated, restarting board...',
+                'config': incoming_config,
+                'status': 'offline',
+            }, client=client)
+
+            reset()
+        else:
+            await publish_log_message(message={
+                'error': f"'ssid', 'wifi_pw', 'server', 'port', and 'client_id' are all required fields."
+            }, client=client)
+
+    except Exception as e:
+        await publish_error_message(error={'error': 'Failed to replace configuration'}, exception=e, client=client)
+
 
 
 async def start_code_update(client):
