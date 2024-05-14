@@ -57,17 +57,18 @@ class ENS160:
             self.calibrate_temperature(self.temperature)
             self.calibrate_humidity(self.humidity)
         except OSError:
-            print('failed to init, Assigned the correct pins on machine.Pin() if you get [Errno 19] ENODEV ')
+            print('Failed to initialise: ', OSError)
 
     def calibrate_temperature(self, temperature):
-        #doing calculations based on chip documentation on page 27
-        #not yet sure if this should be float as argument to function is int - to be tested
+        # Calculations based on chip documentation on page 29
         temperature = (temperature + 273.15) * 64
-        #building array that will hold data of _temp
+
+        # Array that will hold data of temperature
         buf = bytearray(2)
-        #grabing low byte
+
+        # Low byte of temperature
         buf[0] = temperature and 0xFF
-        #grabing high byte of _temp
+        # High byte of temperature
         buf[1] = (temperature and 0xFF00) >> 8
 
         self.i2c.writeto_mem(self.ENS160ADDR, ENS160TEMP_IN_REG, buf)
@@ -75,7 +76,7 @@ class ENS160:
         time.sleep(0.025)
 
     def calibrate_humidity(self, humidity):
-        #doing calculations based on chip documentation on page 27
+        # Calculation based on chip documentation on page 29
         humidity = humidity*512
 
         buf = bytearray(2)
@@ -83,6 +84,7 @@ class ENS160:
         buf[1] = (humidity and 0xFF00) >> 8
 
         self.i2c.writeto_mem(self.ENS160ADDR, ENS160RH_IN_REG, buf)
+
         time.sleep(0.025)
 
     def get_readings(self):

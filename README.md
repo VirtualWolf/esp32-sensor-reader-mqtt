@@ -7,7 +7,7 @@ Libraries used:
 * glenn20's [micropython-esp32-ota](https://github.com/glenn20/micropython-esp32-ota/) for over-the-air firmware updates
 * Jakub Bednarski's [senko](https://github.com/RangerDigital/senko/) as the original basis from the [update_from_github.py](src/update_from_github.py) code
 * Christopher Arndt's [mrequests](https://github.com/SpotlightKid/mrequests) for ease of streaming files from GitHub to flash to avoid the memory issues of regular `requests`
-* A slightly modified version of Lukasz Awsiukiewicz's [ENS160](https://github.com/awsiuk/ENS160) library
+* [My fork](https://github.com/VirtualWolf/ENS160) of Lukasz Awsiukiewicz's [ENS160](https://github.com/awsiuk/ENS160) library
 
 # Configuration
 
@@ -161,7 +161,7 @@ The `github_token` variable is only required if the repository is private.
 
 The data that's sent to MQTT will vary depending on the sensor type being used.
 
-For a DHT22 or a BME280 with `enable_bme280_additional_data` set to `false`:
+For a DHT22 (or a BME280 with `enable_bme280_additional_data` set to `false`):
 
 ```json
 {
@@ -264,7 +264,7 @@ To _remove_ a configuration option, send the configuration option with an empty 
 }
 ```
 
-Note that the _required_ options (`client_id`, `server`, `port`, `topic`, `ssid`, and `wifi_pw`) cannot be deleted, only updated to new values.
+Note that the _required_ options (`client_id`, `server`, `port`, `ssid`, and `wifi_pw`) cannot be deleted, only updated to new values.
 
 ## Replacing configuration
 To replace the entire configuration of the board all in one go, send a message to the `commands/<CLIENT_ID>` topic with the following payload:
@@ -283,7 +283,7 @@ To replace the entire configuration of the board all in one go, send a message t
 }
 ```
 
-The replacement will be rejected if the minimum required keys listed in `config` above aren't set.
+The replacement configuration will be rejected if the minimum required keys listed in `config` above aren't set.
 
 ## Restarting the board
 Send a message to the `commands/<CLIENT_ID>` topic with the following payload:
