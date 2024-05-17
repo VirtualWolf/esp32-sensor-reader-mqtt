@@ -1,26 +1,28 @@
-import ujson
-from mqtt import config
+import json
+from mqtt import config as mqtt_config
 
 with open('config.json', 'r') as file:
-    c = ujson.load(file)
+    c = json.load(file)
 
 # Settings for the MQTT library
-config['client_id']                     = c.get('client_id')
-config['server']                        = c.get('server')
-config['port']                          = c.get('port')
-config['ssid']                          = c.get('ssid')
-config['wifi_pw']                       = c.get('wifi_pw')
-config['will']                          = f"logs/{c.get('client_id')}", '{"status": "offline"}', True, 1
+mqtt_config['client_id']                     = c.get('client_id')
+mqtt_config['server']                        = c.get('server')
+mqtt_config['port']                          = c.get('port')
+mqtt_config['ssid']                          = c.get('ssid')
+mqtt_config['wifi_pw']                       = c.get('wifi_pw')
+mqtt_config['will']                          = f"logs/{c.get('client_id')}", '{"status": "offline"}', True, 1
 
-# Settings for the sensor reading
-config['topic']                         = c.get('topic')
-config['sensor_type']                   = c.get('sensor_type', 'dht22')
-config['rx_pin']                        = c.get('rx_pin', 26)
+config = {}
+
+# Settings for sensor reading
+config['sensors']                       = c.get('sensors', [])
 config['sda_pin']                       = c.get('sda_pin', 23)
 config['scl_pin']                       = c.get('scl_pin', 22)
+
+# Optional settings
 config['ntp_server']                    = c.get('ntp_server', 'time.cloudflare.com')
 config['disable_watchdog']              = c.get('disable_watchdog', False)
-config['sensors']                       = c.get('sensors', [])
+
 
 # Settings for GitHub updates
 config['github_token']                  = c.get('github_token', None)

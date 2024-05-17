@@ -1,12 +1,12 @@
 import io
 import sys
 import gc
-import utime
-import ujson
+import time
+import json
 from config import config
 
 def log(message):
-    year, month, day, hour, minute, second, weekday, yearday = utime.gmtime()
+    year, month, day, hour, minute, second, weekday, yearday = time.gmtime()
 
     now = '{}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}'.format(year, month, day, hour, minute, second)
 
@@ -22,7 +22,7 @@ async def publish_log_message(message, client, retain=False):
             message['config'].update({'github_token': '********'})
 
     log(message)
-    await client.publish(config['logs_topic'], ujson.dumps(message), qos=1, retain=retain)
+    await client.publish(config['logs_topic'], json.dumps(message), qos=1, retain=retain)
 
 async def publish_error_message(error, client, exception=None):
     if exception is not None:
@@ -34,4 +34,4 @@ async def publish_error_message(error, client, exception=None):
     gc.collect()
 
     log(error)
-    await client.publish(config['logs_topic'], ujson.dumps(error), qos=1)
+    await client.publish(config['logs_topic'], json.dumps(error), qos=1)

@@ -1,6 +1,6 @@
+import asyncio
 import ntptime
 from machine import Pin, Timer, reset
-import uasyncio as asyncio
 from mqtt import MQTTClient, config as mqtt_config
 from lib.ota import rollback, status
 from config import config
@@ -68,18 +68,18 @@ async def main(client):
     set_time_timer = Timer(0)
     set_time_timer.init(mode=Timer.PERIODIC, period=86400000, callback=set_time)
 
-    for coroutine in (up, down, admin.messages):
+    for coroutine in (up, down, admin.messages, sensor.read_sensors):
         asyncio.create_task(coroutine(client))
 
     while True:
-        await sensor.read_sensor(client)
+        await asyncio.sleep(30)
 
 mqtt_config['queue_len'] = 10
 
-client = MQTTClient(mqtt_config)
+mqtt_client = MQTTClient(mqtt_config)
 
 try:
-    asyncio.run(main(client))
+    asyncio.run(main(mqtt_client))
 finally:  # Prevent LmacRxBlk:1 errors.
-    client.close()
+    mqtt_client.close()
     asyncio.new_event_loop()

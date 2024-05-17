@@ -1,6 +1,6 @@
 from platform import platform
 import gc
-import ujson
+import json
 import uos
 from machine import reset
 from config import config
@@ -13,7 +13,7 @@ async def messages(client):
         gc.collect()
 
         try:
-            payload = ujson.loads(msg.decode())
+            payload = json.loads(msg.decode())
 
             if 'command' in payload:
                 if payload['command'] == 'get_config':
@@ -49,7 +49,7 @@ async def messages(client):
 
 async def get_config(client):
     with open('config.json', 'r') as file:
-        current_config = ujson.load(file)
+        current_config = json.load(file)
 
     await publish_log_message(message={'config': current_config}, client=client)
 
@@ -85,7 +85,7 @@ async def get_system_info(client):
 async def update_config(incoming_config, client):
     try:
         with open('config.json', 'r') as file:
-            current_config = ujson.load(file)
+            current_config = json.load(file)
 
         config_key = next(iter(incoming_config.keys()))
         config_value = next(iter(incoming_config.values()))
@@ -107,7 +107,7 @@ async def update_config(incoming_config, client):
             current_config.update(incoming_config)
 
         with open('config.json', 'w') as file:
-            ujson.dump(current_config, file)
+            json.dump(current_config, file)
 
         await publish_log_message(message={
             'message': 'Configuration updated, restarting board...',
@@ -127,7 +127,7 @@ async def replace_config(incoming_config, client):
 
         if all(key in incoming_config for key in required_config_keys):
             with open('config.json', 'w') as file:
-               ujson.dump(incoming_config, file)
+               json.dump(incoming_config, file)
 
             await publish_log_message(message={
                 'message': 'Configuration updated, restarting board...',

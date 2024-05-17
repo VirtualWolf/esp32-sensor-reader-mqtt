@@ -3,13 +3,15 @@ import uasyncio as asyncio
 from machine import UART
 import ustruct as struct
 import logger
-from config import config
 
-async def read_data(client):
+async def read_data(client, rx_pin):
     logger.log('Initialising UART bus')
 
+    if isinstance(rx_pin, str):
+        rx_pin = int(rx_pin)
+
     uart = UART(1, 9600)
-    uart.init(9600, bits=8, parity=None, rx=int(config['rx_pin']), timeout=250)
+    uart.init(9600, bits=8, parity=None, rx=rx_pin, timeout=250)
 
     count = 0
 
