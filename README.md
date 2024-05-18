@@ -339,10 +339,8 @@ Also included in this repository are the [Ansible](https://www.ansible.com) runb
 
 Run them with `ansible-playbook ansible/playbooks/<file>`:
 
-  * `flash_board.yml` — This will erase the board, download MicroPython, and flash it to the board. I have [Adafruit HUZZAH32](https://www.adafruit.com/product/3405) and [Unexpected Maker FeatherS2](https://feathers2.io) devices, but the `vars` dict in the playbook can be updated for other boards.
-  * `copy_code_dev.yml` — This will generate the `config.json` file and prompt for a client_id, and other settings.
-  * `copy_code_dev_temperature.yml` — This will generate the `config.json` file and uses a fixed set of the variables in order to quickly yeet everything onto the board with minimal fuss. Assumes a DHT22 sensor.
-  * `copy_code_dev_airquality.yml` — Same as `copy_code_dev_temperature.yml` above except for the PMS5003 sensor.
+  * `flash_board.yml` — This will erase the board, download MicroPython, and flash it to the board. I have [Adafruit HUZZAH32](https://www.adafruit.com/product/3405), [Adafruit QT Py ESP32-Pico](https://www.adafruit.com/product/5395), and [Unexpected Maker FeatherS2](https://feathers2.io) devices, but the inventory can be updated for other boards.
+  * `copy_code_dev.yml` — This will prompt for the board type, sensor configuration, and client_id, and will generate the `config.json` file and copy the files to the board then restart it.
   * `copy_code_prod.yml` — This is my "production" configuration I use for the temperature sensors that are set up permanently around the house. It only prompts for the client_id and the rest is either calculated based on that or is hard-coded, to avoid me making any configuration mistakes if I need to reflash the board.
 
 ## Adding a self-contained Ansible installation

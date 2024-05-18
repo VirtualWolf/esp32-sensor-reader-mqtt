@@ -1,59 +1,11 @@
-# Configure the sensors appropriately for each production board
-- name: Configure for production outdoor weather
-  delegate_to: localhost
+- name: Set I2C configuration
   ansible.builtin.set_fact:
-    sensors:
-      - type: bme280
-        i2c_address: 119
-        enable_additional_data: true
-        topic: home/outdoor/weather
-  when: is_production is defined and is_production == true and mqtt_client_id == 'outdoor'
+    sda_pin: "{{ boards[board].sda_pin }}"
+    scl_pin: "{{ boards[board].scl_pin }}"
 
-- name: Configure for production outdoor air quality
-  delegate_to: localhost
-  ansible.builtin.set_fact:
-    sensors:
-      - type: pms5003
-        rx_pin: 26
-        topic: home/outdoor/airquality
-  when: is_production is defined and is_production == true and mqtt_client_id == 'airquality'
+- ansible.builtin.import_tasks: prod.yml
+  when: is_production is defined and is_production == true
 
-- name: Configure for production indoor weather and air quality
-  delegate_to: localhost
-  ansible.builtin.set_fact:
-    sensors:
-      - type: bme280
-        i2c_address: 119
-        enable_additional_data: false
-        topic: home/indoor/weather
-      - type: ens160
-        i2c_address: 83
-        topic: home/indoor/airquality
-  when: is_production is defined and is_production == true and mqtt_client_id == 'indoor'
-
-- name: Configure for production office weather and air quality
-  delegate_to: localhost
-  ansible.builtin.set_fact:
-    sensors:
-      - type: bme280
-        i2c_address: 119
-        enable_additional_data: false
-        topic: home/office/weather
-      - type: ens160
-        i2c_address: 83
-        topic: home/office/airquality
-  when: is_production is defined and is_production == true and mqtt_client_id == 'office'
-
-- name: Configure for production back room weather
-  delegate_to: localhost
-  ansible.builtin.set_fact:
-    sensors:
-      - type: dht22
-        rx_pin: 26
-        topic: home/backroom/weather
-  when: is_production is defined and is_production == true and mqtt_client_id == 'backroom'
-
-# Generate the configuration file and copy code to the board
 - name: Generate config.json
   delegate_to: localhost
   ansible.builtin.template:

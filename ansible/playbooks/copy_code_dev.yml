@@ -1,0 +1,37 @@
+- name: Configure board for DHT22 sensor
+  hosts: localhost
+  vars_prompt:
+    - name: board_type
+      prompt: |
+        Board type?
+          1: HUZZAH32
+          2: QT Py ESP32
+          3: UM FeatherS2
+      private: false
+    - name: sensor_configuration
+      prompt: |
+        Sensors?
+          1: BME280
+          2: BME280 and ENS160
+          3: BME280 and PMS5003
+          4: DHT22
+          5: DHT22 and PMS5003
+          6: PMS5003
+      private: false
+    - name: flash_board
+      prompt: Flash the board first? (yes/no)
+      default: false
+      private: false
+    - name: mqtt_client_id
+      prompt: What is the MQTT client_id?
+      default: dev
+      private: false
+  vars:
+    board: "{{ board_types[board_type] }}"
+    mqtt_broker_address: "{{lookup('pipe','hostname')}}"
+    sensors: "{{ dev_sensor_configurations[sensor_configuration] }}"
+    disable_watchdog: true
+  roles:
+    - role: flash_board
+      when: flash_board | bool
+    - copy_code

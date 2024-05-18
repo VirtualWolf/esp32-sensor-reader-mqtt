@@ -6,6 +6,60 @@ all:
       ssid: "{{ lookup('community.general.onepassword', 'UniFi Dream Router', section='Primary network', field='ssid') }}"
       ssid_password: "{{ lookup('community.general.onepassword', 'UniFi Dream Router', section='Primary network', field='password') }}"
 
+      dev_sensor_configurations:
+        # BME280
+        '1':
+          - type: bme280
+            i2c_address: 119
+            enable_additional_data: true
+            topic: "home/{{ mqtt_client_id }}/weather"
+
+        # BME280 and ENS160
+        '2':
+          - type: bme280
+            i2c_address: 119
+            enable_additional_data: true
+            topic: "home/{{ mqtt_client_id }}/weather"
+          - type: ens160
+            i2c_address: 83
+            topic: "home/{{ mqtt_client_id }}/airquality"
+
+        # BME280 and PMS5003
+        '3':
+          - type: bme280
+            i2c_address: 119
+            enable_additional_data: true
+            topic: "home/{{ mqtt_client_id }}/weather"
+          - type: pms5003
+            rx_pin: 12
+            topic: "home/{{ mqtt_client_id }}/airquality"
+
+        # DHT22
+        '4':
+          - type: dht22
+            rx_pin: 26
+            topic: "home/{{ mqtt_client_id }}/weather"
+
+        # DHT22 and PMS5003
+        '5':
+          - type: dht22
+            rx_pin: 26
+            topic: "home/{{ mqtt_client_id }}/weather"
+          - type: pms5003
+            rx_pin: 12
+            topic: "home/{{ mqtt_client_id }}/airquality"
+
+        # PMS5003
+        '6':
+          - type: pms5003
+            rx_pin: 12
+            topic: "home/{{ mqtt_client_id }}/airquality"
+
+      board_types:
+        '1': huzzah32
+        '2': qtpy_esp32
+        '3': um_feathers2
+
       boards:
         # Adafruit HUZZAH32: https://www.adafruit.com/product/3405
         huzzah32:
@@ -19,7 +73,7 @@ all:
         qtpy_esp32:
           chip: esp32
           firmware_filename: ESP32_GENERIC-SPIRAM
-          serial_port: /dev/tty.usbserial-57930204331
+          serial_port: /dev/tty.usbserial-57930150831
           sda_pin: 22
           scl_pin: 19
 

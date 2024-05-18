@@ -5,6 +5,8 @@
     "ssid": "{{ ssid }}",
     "wifi_pw": "{{ ssid_password }}",
     "ntp_server": "{{ ntp_server | default('10.0.1.201') }}",
+    "sda_pin": "{{ sda_pin }}",
+    "scl_pin": "{{ scl_pin }}",
     "sensors": {{ sensors | to_nice_json }},
     "disable_watchdog": {{ disable_watchdog | default(false) | bool | to_nice_json }}
 }
