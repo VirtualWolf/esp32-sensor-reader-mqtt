@@ -35,6 +35,9 @@ if sensor_bme280 or sensor_ens160:
 
 if config['disable_watchdog'] is not True:
     if sensor_pms5003:
+        # The PMS5003 is only read every three minutes to prolong the sensor lifetime so
+        # the watchdog timeout needs to be several times that, rather than two minutes
+        # for the other sensors
         wdt = WDT(timeout=600000)
     else:
         wdt = WDT(timeout=120000)
@@ -93,7 +96,9 @@ async def _read_dht22(client):
 
             await publish_sensor_reading(reading=current_data, client=client, topic=sensor_dht22['topic'])
 
-            if config['disable_watchdog'] is not True:
+            # The PMS5003 sensor is only read once every three minutes and the watchdog timeout when a PMS5003 is configured is
+            # ten minutes, so we need to skip the every-30-seconds WDT feed for this sensor if there is also a PMS5003 attached
+            if config['disable_watchdog'] is not True and not sensor_pms5003:
                 wdt.feed()
 
         except Exception as e:
@@ -136,7 +141,9 @@ async def _read_bme280(client):
 
             await publish_sensor_reading(reading=current_data, client=client, topic=sensor_bme280['topic'])
 
-            if config['disable_watchdog'] is not True:
+            # The PMS5003 sensor is only read once every three minutes and the watchdog timeout when a PMS5003 is configured is
+            # ten minutes, so we need to skip the every-30-seconds WDT feed for this sensor if there is also a PMS5003 attached
+            if config['disable_watchdog'] is not True and not sensor_pms5003:
                 wdt.feed()
 
         except Exception as e:
@@ -191,7 +198,9 @@ async def _read_ens160(client):
 
                 await publish_sensor_reading(reading=current_data, client=client, topic=sensor_ens160['topic'])
 
-                if config['disable_watchdog'] is not True:
+                # The PMS5003 sensor is only read once every three minutes and the watchdog timeout when a PMS5003 is configured is
+                # ten minutes, so we need to skip the every-30-seconds WDT feed for this sensor if there is also a PMS5003 attached
+                if config['disable_watchdog'] is not True and not sensor_pms5003:
                     wdt.feed()
 
         except Exception as e:
