@@ -332,7 +332,25 @@ For easier updating, use the `/admin.html` page in my [pi-home-dashboard](https:
 # Extras
 
 ## LED status
-On an [Adafruit HUZZAH32](https://www.adafruit.com/product/3405), the red LED on the board will light up at boot and will turn off once connectivity to wifi and the MQTT broker is established. If the connection drops out (either wifi or to the MQTT broker), the LED will come back on. On the [Unexpected Maker FeatherS2](https://feathers2.io), the red power LED always remains on and the blue LED in the middle of the board is used for status instead.
+The onboard LED on various boards is used for status: if it's on, the connection to wifi or the MQTT broker is down, if it's off, everything is running normally.
+
+The default GPIO pin that will attempted to be used is 13, which is the red LED on an [Adafruit HUZZAH32](https://www.adafruit.com/product/3405) or the blue LED on an [Unexpected Maker FeatherS2](https://feathers2.io). This can be changed by setting the `led_pin` option in `config.json`:
+
+```json
+    "led_pin": 14
+```
+
+For boards with an onboard Neopixel RGB LED like the [Adafruit QT Py ESP32-Pico](https://www.adafruit.com/product/5395), set the pin with `neopixel_pin` and it will come on red if the connection is down:
+
+```json
+    "neopixel_pin": 8
+```
+
+For boards like the aforementioned QT Py ESP32-Pico that also have a separate GPIO pin that controls power to to the Neopixel LED, set the power pin to be used with `neopixel_power_pin`:
+
+```json
+    "neopixel_power_pin": 5
+```
 
 ## Ansible runbooks
 Also included in this repository are the [Ansible](https://www.ansible.com) runbooks I use to erase and re-flash the ESP with a specified version of MicroPython, to generate the `config.json` file for each board/sensor setup, and to copy the code over to the board. These are particular for my setup so you'll need to adapt them for yourself.

@@ -1,6 +1,7 @@
 import asyncio
 import ntptime
 from machine import Pin, Timer, reset
+from neopixel import NeoPixel
 from mqtt import MQTTClient, config as mqtt_config
 from lib.ota import rollback, status
 from config import config
@@ -20,14 +21,25 @@ def set_time():
         reset()
 
 def set_connection_status(state):
-    led = Pin(13, Pin.OUT)
-
+    # When the wifi and MQTT broker are both successfully connected turn the LED off
     if state:
         logger.log('Wifi and MQTT broker are up')
-        led.value(0)
+
+        if config['neopixel_pin'] is not None:
+            pixel.fill((0,0,0))
+            pixel.write()
+        else:
+            led.value(0)
+
+    # Either wifi or the MQTT broker are down to so turn the LED on
     else:
         logger.log('Wifi or MQTT broker is down')
-        led.value(1)
+
+        if config['neopixel_pin'] is not None:
+            pixel.fill((100,0,0))
+            pixel.write()
+        else:
+            led.value(1)
 
 async def up(client):
     while True:
@@ -50,6 +62,18 @@ async def down(client):
         await client.down.wait()  # Pause until connectivity changes
         client.down.clear()
         set_connection_status(False)
+
+# The onboard NeoPixel on the Adafruit QT Py doesn't have power enabled by default so we need to turn it on first
+if config['neopixel_pin'] is not None and config['neopixel_power_pin'] is not None:
+    power_pin = Pin(config['neopixel_power_pin'], Pin.OUT)
+    power_pin.on()
+
+# Use the onboard NeoPixel LED for status indicators if the appropriate configuration options are set
+if config['neopixel_pin'] is not None:
+    pin = Pin(config['neopixel_pin'], Pin.OUT)
+    pixel = NeoPixel(pin, 1)
+else:
+    led = Pin(config['led_pin'], Pin.OUT)
 
 set_connection_status(False)
 

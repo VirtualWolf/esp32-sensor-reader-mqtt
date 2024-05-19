@@ -1,7 +1,10 @@
-- name: Set I2C configuration
+- name: Set additional configuration
   ansible.builtin.set_fact:
     sda_pin: "{{ boards[board].sda_pin }}"
     scl_pin: "{{ boards[board].scl_pin }}"
+    neopixel_pin: "{{ boards[board].neopixel_pin | default(false) }}"
+    neopixel_power_pin: "{{ boards[board].neopixel_power_pin | default(false) }}"
+    led_pin: "{{ boards[board].led_pin | default(false) }}"
 
 - ansible.builtin.import_tasks: prod.yml
   when: is_production is defined and is_production == true

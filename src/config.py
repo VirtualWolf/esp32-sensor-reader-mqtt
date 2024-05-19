@@ -1,6 +1,9 @@
 import json
 from mqtt import config as mqtt_config
 
+def convert_to_int(value):
+    return int(value) if isinstance(value, str) else value
+
 with open('config.json', 'r') as file:
     c = json.load(file)
 
@@ -16,13 +19,15 @@ config = {}
 
 # Settings for sensor reading
 config['sensors']                       = c.get('sensors', [])
-config['sda_pin']                       = c.get('sda_pin', 23)
-config['scl_pin']                       = c.get('scl_pin', 22)
+config['sda_pin']                       = convert_to_int(c.get('sda_pin', 23))
+config['scl_pin']                       = convert_to_int(c.get('scl_pin', 22))
 
 # Optional settings
 config['ntp_server']                    = c.get('ntp_server', 'time.cloudflare.com')
 config['disable_watchdog']              = c.get('disable_watchdog', False)
-
+config['led_pin']                       = convert_to_int(c.get('led_pin', 13))
+config['neopixel_pin']                  = convert_to_int(c.get('neopixel_pin', None))
+config['neopixel_power_pin']            = convert_to_int(c.get('neopixel_power_pin', None))
 
 # Settings for GitHub updates
 config['github_token']                  = c.get('github_token', None)

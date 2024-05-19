@@ -31,7 +31,7 @@ except StopIteration:
     sensor_ens160 = False
 
 if sensor_bme280 or sensor_ens160:
-    i2c = I2C(0, sda=Pin(int(config['sda_pin'])), scl=Pin(int(config['scl_pin'])), timeout=50000)
+    i2c = I2C(0, sda=Pin(config['sda_pin']), scl=Pin(config['scl_pin']), timeout=50000)
 
 if config['disable_watchdog'] is not True:
     if sensor_pms5003:
@@ -69,7 +69,7 @@ async def _read_dht22(client):
     global temperature_calibration
     global humidity_calibration
 
-    sensor = dht.DHT22(Pin(int(sensor_dht22['rx_pin'])))
+    sensor = dht.DHT22(Pin(sensor_dht22['rx_pin']))
 
     while True:
         try:
@@ -108,7 +108,7 @@ async def _read_bme280(client):
     global temperature_calibration
     global humidity_calibration
 
-    sensor = bme280.BME280(i2c=i2c, address=int(sensor_bme280['i2c_address']))
+    sensor = bme280.BME280(i2c=i2c, address=sensor_bme280['i2c_address'])
 
     while True:
         try:
@@ -170,7 +170,7 @@ async def _read_ens160(client):
     global temperature_calibration
     global humidity_calibration
 
-    sensor = ens160.ENS160(i2c=i2c, address=int(sensor_ens160['i2c_address']), temperature=temperature_calibration, humidity=humidity_calibration)
+    sensor = ens160.ENS160(i2c=i2c, address=sensor_ens160['i2c_address'], temperature=temperature_calibration, humidity=humidity_calibration)
 
     while True:
         try:
