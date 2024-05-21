@@ -1,5 +1,5 @@
 # Configure the sensors appropriately for each production board
-- name: Configure for production outdoor weather
+- name: Configure for production outdoor weather and air quality
   delegate_to: localhost
   ansible.builtin.set_fact:
     sensors:
@@ -7,16 +7,10 @@
         i2c_address: 119
         enable_additional_data: true
         topic: home/outdoor/weather
-  when: mqtt_client_id == 'outdoor'
-
-- name: Configure for production outdoor air quality
-  delegate_to: localhost
-  ansible.builtin.set_fact:
-    sensors:
       - type: pms5003
-        rx_pin: 26
+        rx_pin: 12
         topic: home/outdoor/airquality
-  when: mqtt_client_id == 'airquality'
+  when: mqtt_client_id == 'outdoor'
 
 - name: Configure for production indoor weather and air quality
   delegate_to: localhost
