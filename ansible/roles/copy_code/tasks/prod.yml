@@ -3,9 +3,13 @@
   delegate_to: localhost
   ansible.builtin.set_fact:
     sensors:
+      - type: sht30
+        i2c_address: 68
+        enable_dew_point: true
+        topic: home/outdoor/weather
       - type: bme280
         i2c_address: 119
-        enable_additional_data: true
+        enable_pressure_only: true
         topic: home/outdoor/weather
       - type: pms5003
         rx_pin: 12

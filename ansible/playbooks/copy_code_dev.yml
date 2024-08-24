@@ -17,6 +17,7 @@
           4: DHT22
           5: DHT22 and PMS5003
           6: PMS5003
+          7: SHT30
       private: false
     - name: flash_board
       prompt: Flash the board first? (yes/no)

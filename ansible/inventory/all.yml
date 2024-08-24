@@ -55,6 +55,13 @@ all:
             rx_pin: 12
             topic: "home/{{ mqtt_client_id }}/airquality"
 
+        # SHT30
+        '7':
+          - type: sht30
+            i2c_address: 68
+            enable_dew_point: true
+            topic: "home/{{ mqtt_client_id }}/weather"
+
       board_types:
         '1': huzzah32
         '2': qtpy_esp32

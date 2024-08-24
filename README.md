@@ -1,13 +1,14 @@
 # Overview
-A version of my [esp32-sensor-reader](https://github.com/VirtualWolf/esp32-sensor-reader) combined with [esp32-air-quality-reader-mqtt](https://github.com/VirtualWolf/esp32-air-quality-reader-mqtt) that reads from an attached DHT22 temperature/humidity sensor, Bosch BME280 temperature/humidity/air pressure sensor, Plantower PMS5003 air quality sensor, or ScioSense ENS160 air quality sensor, and publishes the readings as JSON to a local MQTT broker.
+A version of my [esp32-sensor-reader](https://github.com/VirtualWolf/esp32-sensor-reader) combined with [esp32-air-quality-reader-mqtt](https://github.com/VirtualWolf/esp32-air-quality-reader-mqtt) that reads from an attached DHT22 temperature/humidity sensor, Bosch BME280 temperature/humidity/air pressure sensor, Sensiron SHT-30 temperature/humidity sensor, Plantower PMS5003 air quality sensor, or ScioSense ENS160 air quality sensor, and publishes the readings as JSON to a local MQTT broker.
 
 Libraries used:
 * Peter Hinch's [mqtt_as.py](https://github.com/peterhinch/micropython-mqtt/blob/master/mqtt_as/README.md) MQTT library
-* Robert Hammelrath's [BME280](https://github.com/robert-hh/BME280/) library if you're using a BME280 instead of a DHT22
+* Robert Hammelrath's [BME280](https://github.com/robert-hh/BME280/) library for Bosch BME280 sensor support
+* A lightly-modified version of [Jeff Otterson's slightly modified version](https://github.com/n1kdo/temperature-sht30/blob/master/src/temperature/sht30.py) of Roberto Sánchez's [SHT30](https://github.com/rsc1975/micropython-sht30) library for Sensiron SHT30 sensor support
+* [My fork](https://github.com/VirtualWolf/ENS160) of Lukasz Awsiukiewicz's [ENS160](https://github.com/awsiuk/ENS160) library
 * glenn20's [micropython-esp32-ota](https://github.com/glenn20/micropython-esp32-ota/) for over-the-air firmware updates
 * Jakub Bednarski's [senko](https://github.com/RangerDigital/senko/) as the original basis from the [update_from_github.py](src/update_from_github.py) code
 * Christopher Arndt's [mrequests](https://github.com/SpotlightKid/mrequests) for ease of streaming files from GitHub to flash to avoid the memory issues of regular `requests`
-* [My fork](https://github.com/VirtualWolf/ENS160) of Lukasz Awsiukiewicz's [ENS160](https://github.com/awsiuk/ENS160) library
 
 # Configuration
 
@@ -51,6 +52,19 @@ For a DHT22 sensor, you'll need set the sensor type, the data pin it's attached 
     ]
 ```
 
+You can optionally include the calculated dew point in the returned data by setting `enable_dew_point` to `true`:
+
+```json
+    "sensors": [
+        {
+            "type": "dht22",
+            "rx_pin": 26,
+            "topic": "home/outdoor/weather",
+            "enable_dew_point": true
+        }
+    ]
+```
+
 ## BME280 temperature/humidity/air pressure sensor
 
 For a BME280, you'll need to specify the sensor type, the I2C address of the sensor, and topic to publish to. You can also explicitly set the I2C SDA and SCL pins if needed (these default to 23 and 22 respectively if not specified):
@@ -79,6 +93,52 @@ If you're using several ESP32s with BME280s, you might not care about the atmosp
         }
     ],
 ```
+
+You can also have the BME280 send _just_ atmospheric pressure data and nothing else (no temperature, humidity, or dew point) by setting `enable_pressure_only` to `true`:
+
+```json
+    "sensors": [
+        {
+            "type": "bme280",
+            "i2c_address": 119,
+            "topic": "home/indoor/weather",
+            "enable_pressure_only": true
+        }
+    ],
+```
+
+## SHT30 temperature/humidity sensor
+
+For an SHT30, you'll need to specify the sensor type, the I2C address of the sensor, and topic to publish to. You can also explicitly set the I2C SDA and SCL pins if needed (these default to 23 and 22 respectively if not specified):
+
+```json
+    "sensors": [
+        {
+            "type": "sht30",
+            "i2c_address": 68,
+            "topic": "home/outdoor/weather"
+        }
+    ],
+    "sda_pin": 19,
+    "scl_pin": 18
+```
+
+You can optionally include the calculated dew point in the returned data by setting `enable_dew_point` to `true`:
+
+```json
+    "sensors": [
+        {
+            "type": "sht30",
+            "i2c_address": 68,
+            "topic": "home/outdoor/weather",
+            "enable_dew_point": true
+        }
+    ]
+```
+
+The SHT30 has a built-in heater that can be turned on to prevent the humidity sensor from becoming saturated and returning wildly incorrect readings when it's outdoors for extended periods of time. The code in this repository has it configured so it will automatically come on when the humidity reaches 95% and will turn back off either once the humidity drops below that, or if there have been five consecutive readings where the humidity is remaining above 95%. Once it's been on, it won't be turned back on again for five minutes after the initial trigger.
+
+This _does_ mean that the temperature reading will jump by around 2˚ when the heater comes on, but I'd prefer that than the sensor becoming useless for humidity readings after it's been outside for a while.
 
 ## PMS5003 air quality sensor
 
@@ -161,13 +221,24 @@ The `github_token` variable is only required if the repository is private.
 
 The data that's sent to MQTT will vary depending on the sensor type being used.
 
-For a DHT22 (or a BME280 with `enable_bme280_additional_data` set to `false`):
+For a DHT22 or SHT30 (or a BME280 with `enable_bme280_additional_data` set to `false`):
 
 ```json
 {
     "timestamp": <epoch time in milliseconds>,
     "temperature": <number>,
     "humidity": <number>
+}
+```
+
+For a DHT22 or SHT30 with `enable_dew_point` set to `true`:
+
+```json
+{
+    "timestamp": <epoch time in milliseconds>,
+    "temperature": <number>,
+    "humidity": <number>,
+    "dew_point": <number>
 }
 ```
 

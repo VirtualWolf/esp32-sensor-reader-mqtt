@@ -1,3 +1,4 @@
+from math import log
 import gc
 import time
 import json
@@ -8,6 +9,7 @@ import logger
 from config import config
 from lib import ens160
 from lib import bme280_float as bme280
+from lib import sht30
 from lib import pms5003
 
 try:
@@ -21,6 +23,13 @@ except StopIteration:
     sensor_bme280 = False
 
 try:
+    sensor_sht30 = next(sensor for sensor in config['sensors'] if sensor['type'] == 'sht30')
+    sensor_sht30['heater_on_count'] = 0
+    sensor_sht30['heater_enabled_at'] = 0
+except StopIteration:
+    sensor_sht30 = False
+
+try:
     sensor_pms5003 = next(sensor for sensor in config['sensors'] if sensor['type'] == 'pms5003')
 except StopIteration:
     sensor_pms5003 = False
@@ -30,7 +39,7 @@ try:
 except StopIteration:
     sensor_ens160 = False
 
-if sensor_bme280 or sensor_ens160:
+if sensor_bme280 or sensor_sht30 or sensor_ens160:
     i2c = I2C(0, sda=Pin(config['sda_pin']), scl=Pin(config['scl_pin']), timeout=50000)
 
 if config['disable_watchdog'] is not True:
@@ -60,6 +69,9 @@ async def read_sensors(client):
     if sensor_bme280:
         asyncio.create_task(_read_bme280(client=client))
 
+    if sensor_sht30:
+        asyncio.create_task(_read_sht30(client=client))
+
     if sensor_pms5003:
         asyncio.create_task(_read_pms5003(client=client))
 
@@ -80,19 +92,25 @@ async def _read_dht22(client):
 
             temperature = sensor.temperature()
             humidity = sensor.humidity()
-            timestamp = (time.time() + 946684800) * 1000
+            dew_point = calculate_dew_point(temperature=temperature, humidity=humidity)
+            timestamp = generate_timestamp()
 
             if sensor_ens160:
                 temperature_calibration = temperature
                 humidity_calibration = humidity
 
-            logger.log(f'Sensor read at {timestamp}, new values: {temperature} & {humidity}%')
+            logger.log(f'Sensor read at {timestamp}, new values: {temperature} & {humidity}%. Dew point is {dew_point}')
 
             current_data = {
                 "timestamp": timestamp,
                 "temperature": temperature,
                 "humidity": humidity
             }
+
+            if sensor_dht22.get('enable_dew_point') is True:
+                current_data.update({
+                    'dew_point': dew_point
+                })
 
             await publish_sensor_reading(reading=current_data, client=client, topic=sensor_dht22['topic'])
 
@@ -119,7 +137,7 @@ async def _read_bme280(client):
         try:
             (temperature, pressure, humidity) = sensor.read_compensated_data()
             dew_point = sensor.dew_point
-            timestamp = (time.time() + 946684800) * 1000
+            timestamp = generate_timestamp()
 
             if sensor_ens160:
                 temperature_calibration = temperature
@@ -127,17 +145,23 @@ async def _read_bme280(client):
 
             logger.log(f'Sensor read at {timestamp}, new values: {temperature}C, {humidity}%, and {pressure} Pa. Dew point is {dew_point}')
 
-            current_data = {
-                "timestamp": timestamp,
-                "temperature": temperature,
-                "humidity": humidity,
-            }
-
-            if sensor_bme280['enable_additional_data'] is True:
-                current_data.update({
-                    "dew_point": dew_point,
+            if sensor_bme280.get('enable_pressure_only') is True:
+                current_data = {
+                    "timestamp": timestamp,
                     "pressure": pressure/100
-                })
+                }
+            else:
+                current_data = {
+                    "timestamp": timestamp,
+                    "temperature": temperature,
+                    "humidity": humidity,
+                }
+
+                if sensor_bme280['enable_additional_data'] is True:
+                    current_data.update({
+                        "dew_point": dew_point,
+                        "pressure": pressure/100
+                    })
 
             await publish_sensor_reading(reading=current_data, client=client, topic=sensor_bme280['topic'])
 
@@ -152,13 +176,90 @@ async def _read_bme280(client):
         gc.collect()
         await asyncio.sleep(30)
 
+async def _read_sht30(client):
+    global temperature_calibration
+    global humidity_calibration
+
+    sensor = sht30.SHT30(i2c=i2c, address=sensor_sht30['i2c_address'])
+
+    while True:
+        try:
+            (temperature, humidity) = sensor.measure()
+            dew_point = calculate_dew_point(temperature, humidity)
+            timestamp = generate_timestamp()
+
+            if sensor_ens160:
+                temperature_calibration = temperature
+                humidity_calibration = humidity
+
+            logger.log(f'Sensor read at {timestamp}, new values: {temperature}C, {humidity}%. Dew point is {dew_point}')
+
+            current_data = {
+                "timestamp": timestamp,
+                "temperature": temperature,
+                "humidity": humidity
+            }
+
+            if sensor_sht30.get('enable_dew_point') is True:
+                current_data.update({'dew_point': dew_point})
+
+            await publish_sensor_reading(reading=current_data, client=client, topic=sensor_sht30['topic'])
+
+            is_heater_enabled = sensor.is_heater_enabled()
+
+            HIGH_HUMIDITY = 95
+
+            if is_heater_enabled is None:
+                sensor_status = sensor.status()
+                await logger.publish_log_message(message={'message':f'Received unexpected response from heater status check: {sensor_status}'}, client=client)
+
+            # Initial state of high humidity, heater not on, and hasn't been on in the last five minutes
+            if humidity > HIGH_HUMIDITY and sensor_sht30['heater_on_count'] == 0 and (timestamp - sensor_sht30['heater_enabled_at']) > 300000 and is_heater_enabled is False:
+                await logger.publish_log_message(message={'message': f'Humidity is {humidity}, enabling heater'}, client=client)
+
+                sensor.enable_heater()
+                sensor_sht30['heater_on_count'] = sensor_sht30['heater_on_count'] + 1
+                sensor_sht30.update({
+                    'heater_enabled_at': timestamp
+                })
+
+            # Humidity has reduced so we can turn the heater off regardless of how long it's been on
+            elif humidity <= HIGH_HUMIDITY and is_heater_enabled is True:
+                await logger.publish_log_message(message={'message': f'Humidity is {humidity}, disabling heater'}, client=client)
+
+                sensor.disable_heater()
+                sensor_sht30['heater_on_count'] = 0
+
+            # Heater is on but humidity is still high and the maximum heater count hasn't been reached
+            elif humidity > HIGH_HUMIDITY and is_heater_enabled is True and 0 < sensor_sht30['heater_on_count'] < 5:
+                await logger.publish_log_message(message={'message': f"Humidity is {humidity}, incrementing heater_on_count to {sensor_sht30['heater_on_count']}"}, client=client)
+
+                sensor_sht30['heater_on_count'] = sensor_sht30['heater_on_count'] + 1
+
+            # The heater is on and has been on for the last five readings so we'll turn it off again
+            elif is_heater_enabled is True and sensor_sht30['heater_on_count'] >= 5:
+                await logger.publish_log_message(message={'message': f'Humidity is {humidity}, heater_on_count has reached 5, disabling heater'}, client=client)
+
+                sensor.disable_heater()
+                sensor_sht30['heater_on_count'] = 0
+
+            # The PMS5003 sensor is only read once every three minutes and the watchdog timeout when a PMS5003 is configured is
+            # ten minutes, so we need to skip the every-30-seconds WDT feed for this sensor if there is also a PMS5003 attached
+            if config['disable_watchdog'] is not True and not sensor_pms5003:
+                wdt.feed()
+
+        except Exception as e:
+            await logger.publish_error_message(error={'error': 'Failed to read sensor'}, exception=e, client=client)
+
+        gc.collect()
+        await asyncio.sleep(30)
 
 
 async def _read_pms5003(client):
     while True:
         try:
             current_data = await pms5003.read_data(client=client, rx_pin=sensor_pms5003['rx_pin'])
-            current_data['timestamp'] = (time.time() + 946684800) * 1000
+            current_data['timestamp'] = generate_timestamp()
 
             await publish_sensor_reading(reading=current_data, client=client, topic=sensor_pms5003['topic'])
 
@@ -182,7 +283,7 @@ async def _read_ens160(client):
     while True:
         try:
             (aqi, tvoc, eco2) = sensor.get_readings()
-            timestamp = (time.time() + 946684800) * 1000
+            timestamp = generate_timestamp()
 
             logger.log('Sensor read at {}. AQI {}, TVOC {}, ECO2 {}'.format(timestamp, aqi, tvoc, eco2))
 
@@ -209,7 +310,16 @@ async def _read_ens160(client):
         gc.collect()
         await asyncio.sleep(30)
 
-
+def generate_timestamp():
+    return (time.time() + 946684800) * 1000
 
 async def publish_sensor_reading(reading, client, topic):
     await client.publish(topic, json.dumps(reading), qos=1, retain=True)
+
+# Thanks to https://gist.github.com/sourceperl/45587ea99ff123745428?permalink_comment_id=5119362#gistcomment-5119362
+def calculate_dew_point(temperature, humidity):
+    a = 17.625
+    b = 243.04
+    alpha = log(humidity/100.0) + ((a * temperature) / (b + temperature))
+
+    return (b * alpha) / (a - alpha)
