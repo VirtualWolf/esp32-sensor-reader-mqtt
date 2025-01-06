@@ -16,7 +16,7 @@
         topic: home/outdoor/airquality
       - type: vl53l1x
         i2c_address: 41
-        topic: automation/displays/zerotoo
+        topic: commands/displays/zerotoo
         trigger_threshold_mm: 1500
         ignore_trigger_period: 3600
   when: mqtt_client_id == 'outdoor'
