@@ -5,6 +5,7 @@
     neopixel_pin: "{{ boards[board].neopixel_pin | default(false) }}"
     neopixel_power_pin: "{{ boards[board].neopixel_power_pin | default(false) }}"
     led_pin: "{{ boards[board].led_pin | default(false) }}"
+  when: skip_config_prompt is not defined
 
 - ansible.builtin.import_tasks: prod.yml
   when: is_production is defined and is_production == true
@@ -14,17 +15,20 @@
   ansible.builtin.template:
     src: templates/config.j2
     dest: "{{ lookup('env', 'PWD') }}/src/config.json"
+  when: skip_config_prompt is not defined
 
 - name: Get current Git commit hash
   delegate_to: localhost
   ansible.builtin.command: git rev-parse --short HEAD
   register: repository
+  when: skip_config_prompt is not defined
 
 - name: Write Git commit hash to .version file
   delegate_to: localhost
   ansible.builtin.copy:
     content: "{{ repository.stdout }}"
     dest: "{{ lookup('env', 'PWD') }}/src/.version"
+  when: skip_config_prompt is not defined
 
 - name: Copy files to board and restart
   delegate_to: localhost

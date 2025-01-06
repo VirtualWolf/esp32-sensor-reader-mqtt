@@ -18,6 +18,7 @@
           5: DHT22 and PMS5003
           6: PMS5003
           7: SHT30
+          8: VL53L1X
       private: false
     - name: flash_board
       prompt: Flash the board first? (yes/no)

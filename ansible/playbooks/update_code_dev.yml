@@ -1,0 +1,7 @@
+- name: Copy code without prompting
+  hosts: localhost
+  vars:
+    skip_config_prompt: true
+    board: huzzah32
+  roles:
+    - copy_code

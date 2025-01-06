@@ -62,6 +62,15 @@ all:
             enable_dew_point: true
             topic: "home/{{ mqtt_client_id }}/weather"
 
+        # VL53L1X
+        '8':
+          - type: vl53l1x
+            i2c_address: 41
+            trigger_threshold_mm: 200
+            ignore_trigger_period: 5
+            topic: "automation/displays/dev"
+
+
       board_types:
         '1': huzzah32
         '2': qtpy_esp32

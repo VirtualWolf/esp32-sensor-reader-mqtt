@@ -14,6 +14,11 @@
       - type: pms5003
         rx_pin: 12
         topic: home/outdoor/airquality
+      - type: vl53l1x
+        i2c_address: 41
+        topic: automation/displays/zerotoo
+        trigger_threshold_mm: 1500
+        ignore_trigger_period: 3600
   when: mqtt_client_id == 'outdoor'
 
 - name: Configure for production indoor weather and air quality
