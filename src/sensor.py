@@ -333,6 +333,10 @@ async def _read_vl53l1x(client):
     while True:
         try:
             distance = sensor.read()
+
+            if sensor.status != 'OK':
+                continue
+
             print('Distance: {}mm'.format(distance))
 
             timestamp = generate_timestamp()
