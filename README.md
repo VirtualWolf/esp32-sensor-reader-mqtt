@@ -6,6 +6,7 @@ Libraries used:
 * Robert Hammelrath's [BME280](https://github.com/robert-hh/BME280/) library for Bosch BME280 sensor support
 * A lightly-modified version of [Jeff Otterson's slightly modified version](https://github.com/n1kdo/temperature-sht30/blob/master/src/temperature/sht30.py) of Roberto Sánchez's [SHT30](https://github.com/rsc1975/micropython-sht30) library for Sensiron SHT30 sensor support
 * [My fork](https://github.com/VirtualWolf/ENS160) of Lukasz Awsiukiewicz's [ENS160](https://github.com/awsiuk/ENS160) library
+* drakxtwo's [vl53l1x_pico](https://github.com/drakxtwo/vl53l1x_pico) library for VL53L1X distance sensor support
 * glenn20's [micropython-esp32-ota](https://github.com/glenn20/micropython-esp32-ota/) for over-the-air firmware updates
 * Jakub Bednarski's [senko](https://github.com/RangerDigital/senko/) as the original basis from the [update_from_github.py](src/update_from_github.py) code
 * Christopher Arndt's [mrequests](https://github.com/SpotlightKid/mrequests) for ease of streaming files from GitHub to flash to avoid the memory issues of regular `requests`
@@ -171,6 +172,42 @@ If you're using a ENS160 sensor, you'll need to specify the sensor type, I2C add
 
 The ENS160 has built-in calibration based on temperature and humidity readings, if you're using it by itself it will always use values of 25˚C and 50% relative humidity but you have a DHT22 or BME280 attached as well, it will calibrate itself based on the values read from that sensor.
 
+## VL53L1X distance sensor
+
+The behaviour when using this sensor differs a little bit from the ones above: rather than reading the sensor every 30 seconds, this sensor is configured with a distance theshold in millimetres and ignore period in seconds:
+
+```json
+    "sensors": [
+        {
+            "type": "vl53l1x",
+            "i2c_address": 41,
+            "topic": "automation/displays",
+            "trigger_threshold_mm": 1500,
+            "ignore_trigger_period": 3600
+        }
+    ]
+```
+
+The sensor is constantly polled every 50ms and if the distance reading is under the threshold given in millimetres, a message will be sent to the specified topic with the following payload:
+
+```json
+{
+    "timestamp": <epoch time in milliseconds>,
+    "triggered": true
+}
+```
+
+Once the distance threshold stops being breached and the `ignore_trigger_period` has elapsed, another message will be sent to the topic:
+
+```json
+{
+    "timestamp": <epoch time in milliseconds>,
+    "triggered": false
+}
+```
+
+(As an example use-case, I'm using this to turn on a [PaPiRus e-ink display attached to a Raspberry Pi](https://github.com/VirtualWolf/papirus-temperature-displayer-mqtt) when I walk into our back room and then turn it back off after there is no movement for an hour.)
+
 ## Using multiple sensors
 
 If you have multiple sensor attached to a single board, you can add additional objects to the `sensors` array:
@@ -279,6 +316,15 @@ For an ENS160:
     "aqi": <number>,
     "tvoc": <number>,
     "eco2": <number>
+}
+```
+
+For a VL53L1X:
+
+```json
+{
+    "timestamp": <epoch time in milliseconds>,
+    "triggered": <boolean>
 }
 ```
 

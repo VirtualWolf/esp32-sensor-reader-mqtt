@@ -11,6 +11,7 @@ from lib import ens160
 from lib import bme280_float as bme280
 from lib import sht30
 from lib import pms5003
+from lib import vl53l1x
 
 try:
     sensor_dht22 = next(sensor for sensor in config['sensors'] if sensor['type'] == 'dht22')
@@ -39,7 +40,12 @@ try:
 except StopIteration:
     sensor_ens160 = False
 
-if sensor_bme280 or sensor_sht30 or sensor_ens160:
+try:
+    sensor_vl53l1x = next(sensor for sensor in config['sensors'] if sensor['type'] == 'vl53l1x')
+except StopIteration:
+    sensor_vl53l1x = False
+
+if sensor_bme280 or sensor_sht30 or sensor_ens160 or sensor_vl53l1x:
     i2c = I2C(0, sda=Pin(config['sda_pin']), scl=Pin(config['scl_pin']), timeout=50000)
 
 if config['disable_watchdog'] is not True:
@@ -77,6 +83,9 @@ async def read_sensors(client):
 
     if sensor_ens160:
         asyncio.create_task(_read_ens160(client=client))
+
+    if sensor_vl53l1x:
+        asyncio.create_task(_read_vl53l1x(client=client))
 
 
 
@@ -176,6 +185,8 @@ async def _read_bme280(client):
         gc.collect()
         await asyncio.sleep(30)
 
+
+
 async def _read_sht30(client):
     global temperature_calibration
     global humidity_calibration
@@ -255,6 +266,7 @@ async def _read_sht30(client):
         await asyncio.sleep(30)
 
 
+
 async def _read_pms5003(client):
     while True:
         try:
@@ -310,11 +322,60 @@ async def _read_ens160(client):
         gc.collect()
         await asyncio.sleep(30)
 
+
+
+async def _read_vl53l1x(client):
+    sensor = vl53l1x.VL53L1X(i2c=i2c, address=sensor_vl53l1x['i2c_address'])
+
+    last_trigger = 0
+    triggered = False
+
+    while True:
+        try:
+            distance = sensor.read()
+            print('Distance: {}mm'.format(distance))
+
+            timestamp = generate_timestamp()
+
+            # If the threshold is breached AND it's not currently triggered AND the last trigger timestamp is more than the ignore period, send a trigger message
+            if distance < sensor_vl53l1x['trigger_threshold_mm'] and triggered is False and (timestamp - last_trigger > (sensor_vl53l1x['ignore_trigger_period'] * 1000)):
+                await logger.publish_log_message({'message': 'Distance threshold breached'}, client=client)
+
+                await publish_sensor_reading(reading={'timestamp': timestamp, 'triggered': True}, client=client, topic=sensor_vl53l1x['topic'])
+
+                gc.collect()
+
+                last_trigger = timestamp
+                triggered = True
+
+            # If the threshold is breached but it's already been triggered, update the last trigger timestamp so the ignore period remains current
+            elif distance < sensor_vl53l1x['trigger_threshold_mm'] and triggered is True:
+                last_trigger = timestamp
+
+            # If the threshold is no longer breached AND it's currently triggered AND the last trigger time is greater than the ignore period, reset back to false
+            elif distance > sensor_vl53l1x['trigger_threshold_mm'] and triggered is True and (last_trigger < timestamp - (sensor_vl53l1x['ignore_trigger_period'] * 1000)):
+                await logger.publish_log_message({'message': 'Distance threshold not breached in last period, resetting trigger'}, client=client)
+
+                await publish_sensor_reading(reading={'timestamp': timestamp, 'triggered': False}, client=client, topic=sensor_vl53l1x['topic'])
+
+                triggered = False
+
+        except Exception as e:
+            await logger.publish_error_message(error={'error': 'Failed to read sensor'}, exception=e, client=client)
+
+        await asyncio.sleep_ms(50)
+
+
+
 def generate_timestamp():
     return (time.time() + 946684800) * 1000
 
+
+
 async def publish_sensor_reading(reading, client, topic):
     await client.publish(topic, json.dumps(reading), qos=1, retain=True)
+
+
 
 # Thanks to https://gist.github.com/sourceperl/45587ea99ff123745428?permalink_comment_id=5119362#gistcomment-5119362
 def calculate_dew_point(temperature, humidity):
