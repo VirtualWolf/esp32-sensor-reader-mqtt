@@ -270,7 +270,13 @@ async def _read_sht30(client):
 async def _read_pms5003(client):
     while True:
         try:
-            current_data = await pms5003.read_data(client=client, rx_pin=sensor_pms5003['rx_pin'])
+            current_data = await pms5003.read_data(rx_pin=sensor_pms5003['rx_pin'])
+
+            if current_data is None:
+                await logger.publish_error_message(error={'error': 'No valid data'}, client=client)
+
+                continue
+
             current_data['timestamp'] = generate_timestamp()
 
             await publish_sensor_reading(reading=current_data, client=client, topic=sensor_pms5003['topic'])
@@ -336,8 +342,6 @@ async def _read_vl53l1x(client):
 
             if sensor.status != 'OK':
                 continue
-
-            print('Distance: {}mm'.format(distance))
 
             timestamp = generate_timestamp()
 

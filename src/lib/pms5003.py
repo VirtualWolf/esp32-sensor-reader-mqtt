@@ -4,7 +4,7 @@ from machine import UART
 import ustruct as struct
 import logger
 
-async def read_data(client, rx_pin):
+async def read_data(rx_pin):
     logger.log('Initialising UART bus')
 
     if isinstance(rx_pin, str):
@@ -18,17 +18,17 @@ async def read_data(client, rx_pin):
     while count < 30:
         logger.log(f'Warming sensor up, reading #{count} of 30')
 
-        await _read_sensor(uart, client=client)
+        await _read_sensor(uart)
         count = count + 1
         await asyncio.sleep(1)
 
     logger.log('Finished warming up')
 
-    data = await _read_sensor(uart, client=client)
+    data = await _read_sensor(uart)
 
     if data is None:
         await asyncio.sleep(1)
-        await _read_sensor(uart, client=client)
+        await _read_sensor(uart)
 
     logger.log(data)
     logger.log('Turning off UART bus')
@@ -37,15 +37,14 @@ async def read_data(client, rx_pin):
 
     return data
 
-async def _read_sensor(uart, client):
+async def _read_sensor(uart):
     buffer = []
 
     data = uart.read(32)
 
     if data is None:
-        logger.log('No data received, re-running')
+        logger.log('No data received')
 
-        await asyncio.sleep(1)
         return
 
     data = list(data)
@@ -62,18 +61,16 @@ async def _read_sensor(uart, client):
         buffer = []
 
     if len(buffer) < 32:
-        logger.log('Buffer length > 32, re-running')
+        logger.log('Buffer length > 32')
 
-        await asyncio.sleep(1)
-        await _read_sensor(uart, client=client)
+        return
 
     if buffer[1] != 0x4d:
-        logger.log('Second element of buffer was not 0x4d, re-running')
+        logger.log('Second element of buffer was not 0x4d')
 
         buffer.pop(0)
 
-        await asyncio.sleep(1)
-        await _read_sensor(uart, client=client)
+        return
 
     frame_len = struct.unpack(">H", bytes(buffer[2:4]))[0]
 
@@ -82,10 +79,9 @@ async def _read_sensor(uart, client):
     if frame_len != 28:
         buffer = []
 
-        logger.log('Frame length was not 28, re-running')
+        logger.log('Frame length was not 28')
 
-        await asyncio.sleep(1)
-        await _read_sensor(uart, client=client)
+        return
 
     # In order:
     #  - PM1.0 standard
@@ -109,10 +105,9 @@ async def _read_sensor(uart, client):
     if check != frame[-1]:
         buffer = []
 
-        logger.log('Checksums don\'t match, re-running')
+        logger.log('Checksums don\'t match')
 
-        await asyncio.sleep(1)
-        await _read_sensor(uart, client=client)
+        return
 
     buffer = buffer[32:]
 
