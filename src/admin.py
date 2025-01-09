@@ -5,7 +5,7 @@ import uos
 from machine import reset
 from config import config
 from update_from_github import Updater
-from logger import publish_log_message, publish_error_message
+from logger import publish_log_message, publish_error_message, get_current_time
 from lib.ota import status, update
 
 async def messages(client):
@@ -76,6 +76,7 @@ async def get_system_info(client):
         "total_space": f'{(block_size * total_blocks)/1024:.0f}KB',
         "free_space": f'{(block_size * free_blocks)/1024:.0f}KB',
         "micropython_updates_supported": status.ready(),
+        "current_time": get_current_time(),
     }
 
     await publish_log_message(message=system_info, client=client)

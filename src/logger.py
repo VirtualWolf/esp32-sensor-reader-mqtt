@@ -5,12 +5,13 @@ import time
 import json
 from config import config
 
-def log(message):
+def get_current_time():
     year, month, day, hour, minute, second, weekday, yearday = time.gmtime()
 
-    now = '{}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}'.format(year, month, day, hour, minute, second)
+    return '{}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z'.format(year, month, day, hour, minute, second)
 
-    log_line = '[%s] %s' % (now, message)
+def log(message):
+    log_line = '[%s] %s' % (get_current_time(), message)
 
     print(log_line)
 
@@ -21,6 +22,8 @@ async def publish_log_message(message, client, retain=False):
         if message['config'].get('github_token') is not None:
             message['config'].update({'github_token': '********'})
 
+    message['timestamp'] = get_current_time()
+
     log(message)
     await client.publish(config['logs_topic'], json.dumps(message), qos=1, retain=retain)
 
@@ -30,6 +33,8 @@ async def publish_error_message(error, client, exception=None):
         sys.print_exception(exception, buf)
 
         error['traceback'] = buf.getvalue()
+
+    error['timestamp'] = get_current_time()
 
     gc.collect()
 
