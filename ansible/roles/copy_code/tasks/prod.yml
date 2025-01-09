@@ -1,5 +1,5 @@
 # Configure the sensors appropriately for each production board
-- name: Configure for production outdoor weather and air quality
+- name: Configure for production outdoor weather
   delegate_to: localhost
   ansible.builtin.set_fact:
     sensors:
@@ -11,15 +11,20 @@
         i2c_address: 119
         enable_pressure_only: true
         topic: home/outdoor/weather
-      - type: pms5003
-        rx_pin: 12
-        topic: home/outdoor/airquality
       - type: vl53l1x
         i2c_address: 41
         topic: commands/displays/zerotoo
         trigger_threshold_mm: 1500
         ignore_trigger_period: 3600
   when: mqtt_client_id == 'outdoor'
+
+- name: Configure for production outdoor air quality
+  ansible.builtin.set_fact:
+    sensors:
+      - type: pms5003
+        rx_pin: 12
+        topic: home/outdoor/airquality
+  when: mqtt_client_id == 'outdoor-airquality'
 
 - name: Configure for production indoor weather and air quality
   delegate_to: localhost
