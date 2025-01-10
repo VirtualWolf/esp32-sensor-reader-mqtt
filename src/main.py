@@ -1,6 +1,6 @@
 import asyncio
 import ntptime
-from machine import Pin, Timer, reset
+from machine import Pin, reset
 from neopixel import NeoPixel
 from mqtt import MQTTClient, config as mqtt_config
 from lib.ota import rollback, status
@@ -9,16 +9,17 @@ import sensor
 import admin
 import logger
 
-def set_time():
-    ntptime.host = config['ntp_server']
+async def sync_ntp(client):
+    while True:
+        try:
+            ntptime.settime()
 
-    logger.log(f'Setting time using server {ntptime.host}')
+            await logger.publish_log_message({'message': f'Successfully synced with NTP server {ntptime.host}'}, client=client)
+        except OSError as e:
+            await logger.publish_error_message(error={'error': f'Failed to contact NTP server at {ntptime.host}'}, exception=e, client=client)
 
-    try:
-        ntptime.settime()
-    except OSError:
-        logger.log(f'Failed to contact NTP server at {ntptime.host}')
-        reset()
+        # Sync once per day
+        await asyncio.sleep(86400)
 
 def set_connection_status(state):
     # When the wifi and MQTT broker are both successfully connected turn the LED off
@@ -88,11 +89,7 @@ async def main(client):
     ntptime.host = config['ntp_server']
     ntptime.settime()
 
-    # Synchronise with the NTP server once a day
-    set_time_timer = Timer(0)
-    set_time_timer.init(mode=Timer.PERIODIC, period=86400000, callback=set_time)
-
-    for coroutine in (up, down, admin.messages, sensor.read_sensors):
+    for coroutine in (up, down, admin.messages, sensor.read_sensors, sync_ntp):
         asyncio.create_task(coroutine(client))
 
     while True:
