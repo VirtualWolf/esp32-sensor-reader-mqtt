@@ -137,9 +137,22 @@ You can optionally include the calculated dew point in the returned data by sett
     ]
 ```
 
-The SHT30 has a built-in heater that can be turned on to prevent the humidity sensor from becoming saturated and returning wildly incorrect readings when it's outdoors for extended periods of time. The code in this repository has it configured so it will automatically come on when the humidity reaches 95% and will turn back off either once the humidity drops below that, or if there have been five consecutive readings where the humidity is remaining above 95%. Once it's been on, it won't be turned back on again for five minutes after the initial trigger.
+The SHT30 has a built-in heater that can be turned on to prevent the humidity sensor from becoming saturated and returning wildly incorrect readings when it's outdoors for extended periods of time. It can be optionally enabled to trigger once the humidity hits 95% by setting `enable_heater` to `true`:
 
-This _does_ mean that the temperature reading will jump by around 2˚ when the heater comes on, but I'd prefer that than the sensor becoming useless for humidity readings after it's been outside for a while.
+```json
+    "sensors": [
+        {
+            "type": "sht30",
+            "i2c_address": 68,
+            "topic": "home/outdoor/weather",
+            "enable_heater": true
+        }
+    ],
+```
+
+When on heater will turn on when the humidity reaches 95% and will turn back off either once the humidity drops below that, or if there have been five consecutive readings where the humidity is remaining above 95%. Once it's been on, it won't be turned back on again for five minutes after the initial trigger.
+
+Note that this _does_ mean that the temperature reading will jump by around 2˚ when the heater comes on.
 
 ## PMS5003 air quality sensor
 

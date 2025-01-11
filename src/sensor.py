@@ -216,43 +216,44 @@ async def _read_sht30(client):
 
             await publish_sensor_reading(reading=current_data, client=client, topic=sensor_sht30['topic'])
 
-            is_heater_enabled = sensor.is_heater_enabled()
+            if sensor_sht30.get('enable_heater') is True:
+                is_heater_on = sensor.is_heater_on()
 
-            HIGH_HUMIDITY = 95
+                HIGH_HUMIDITY = 95
 
-            if is_heater_enabled is None:
-                sensor_status = sensor.status()
-                await logger.publish_log_message(message={'message':f'Received unexpected response from heater status check: {sensor_status}'}, client=client)
+                if is_heater_on is None:
+                    sensor_status = sensor.status()
+                    await logger.publish_log_message(message={'message':f'Received unexpected response from heater status check: {sensor_status}'}, client=client)
 
-            # Initial state of high humidity, heater not on, and hasn't been on in the last five minutes
-            if humidity > HIGH_HUMIDITY and sensor_sht30['heater_on_count'] == 0 and (timestamp - sensor_sht30['heater_enabled_at']) > 300000 and is_heater_enabled is False:
-                await logger.publish_log_message(message={'message': f'Humidity is {humidity}, enabling heater'}, client=client)
+                # Initial state of high humidity, heater not on, and hasn't been on in the last five minutes
+                if humidity > HIGH_HUMIDITY and sensor_sht30['heater_on_count'] == 0 and (timestamp - sensor_sht30['heater_enabled_at']) > 300000 and is_heater_on is False:
+                    await logger.publish_log_message(message={'message': f'Humidity is {humidity}, enabling heater'}, client=client)
 
-                sensor.enable_heater()
-                sensor_sht30['heater_on_count'] = sensor_sht30['heater_on_count'] + 1
-                sensor_sht30.update({
-                    'heater_enabled_at': timestamp
-                })
+                    sensor.turn_heater_on()
+                    sensor_sht30['heater_on_count'] = sensor_sht30['heater_on_count'] + 1
+                    sensor_sht30.update({
+                        'heater_enabled_at': timestamp
+                    })
 
-            # Humidity has reduced so we can turn the heater off regardless of how long it's been on
-            elif humidity <= HIGH_HUMIDITY and is_heater_enabled is True:
-                await logger.publish_log_message(message={'message': f'Humidity is {humidity}, disabling heater'}, client=client)
+                # Humidity has reduced so we can turn the heater off regardless of how long it's been on
+                elif humidity <= HIGH_HUMIDITY and is_heater_on is True:
+                    await logger.publish_log_message(message={'message': f'Humidity is {humidity}, disabling heater'}, client=client)
 
-                sensor.disable_heater()
-                sensor_sht30['heater_on_count'] = 0
+                    sensor.turn_heater_off()
+                    sensor_sht30['heater_on_count'] = 0
 
-            # Heater is on but humidity is still high and the maximum heater count hasn't been reached
-            elif humidity > HIGH_HUMIDITY and is_heater_enabled is True and 0 < sensor_sht30['heater_on_count'] < 5:
-                await logger.publish_log_message(message={'message': f"Humidity is {humidity}, incrementing heater_on_count to {sensor_sht30['heater_on_count']}"}, client=client)
+                # Heater is on but humidity is still high and the maximum heater count hasn't been reached
+                elif humidity > HIGH_HUMIDITY and is_heater_on is True and 0 < sensor_sht30['heater_on_count'] < 5:
+                    await logger.publish_log_message(message={'message': f"Humidity is {humidity}, incrementing heater_on_count to {sensor_sht30['heater_on_count']}"}, client=client)
 
-                sensor_sht30['heater_on_count'] = sensor_sht30['heater_on_count'] + 1
+                    sensor_sht30['heater_on_count'] = sensor_sht30['heater_on_count'] + 1
 
-            # The heater is on and has been on for the last five readings so we'll turn it off again
-            elif is_heater_enabled is True and sensor_sht30['heater_on_count'] >= 5:
-                await logger.publish_log_message(message={'message': f'Humidity is {humidity}, heater_on_count has reached 5, disabling heater'}, client=client)
+                # The heater is on and has been on for the last five readings so we'll turn it off again
+                elif is_heater_on is True and sensor_sht30['heater_on_count'] >= 5:
+                    await logger.publish_log_message(message={'message': f'Humidity is {humidity}, heater_on_count has reached 5, disabling heater'}, client=client)
 
-                sensor.disable_heater()
-                sensor_sht30['heater_on_count'] = 0
+                    sensor.turn_heater_off()
+                    sensor_sht30['heater_on_count'] = 0
 
             # The PMS5003 sensor is only read once every three minutes and the watchdog timeout when a PMS5003 is configured is
             # ten minutes, so we need to skip the every-30-seconds WDT feed for this sensor if there is also a PMS5003 attached

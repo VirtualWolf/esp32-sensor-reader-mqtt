@@ -34,8 +34,8 @@ class SHT30:
     STATUS_CMD = b'\xF3\x2D'
     RESET_CMD = b'\x30\xA2'
     CLEAR_STATUS_CMD = b'\x30\x41'
-    ENABLE_HEATER_CMD = b'\x30\x6D'
-    DISABLE_HEATER_CMD = b'\x30\x66'
+    TURN_HEATER_ON_CMD = b'\x30\x6D'
+    TURN_HEATER_OFF_CMD = b'\x30\x66'
 
     def __init__(self, i2c, address):
         self.i2c = i2c
@@ -167,7 +167,7 @@ class SHT30:
         h_dec = (aux % 0xffff * 100) // 0xffff
         return t_int, t_dec, h_int, h_dec
 
-    def is_heater_enabled(self):
+    def is_heater_on(self):
         status = self.status()
 
         # 40976 means the heater is on, 32784 means the heater is off
@@ -178,11 +178,11 @@ class SHT30:
 
         return None
 
-    def enable_heater(self):
-        return self.send_cmd(SHT30.ENABLE_HEATER_CMD, 0)
+    def turn_heater_on(self):
+        return self.send_cmd(SHT30.TURN_HEATER_ON_CMD, 0)
 
-    def disable_heater(self):
-        return self.send_cmd(SHT30.DISABLE_HEATER_CMD, 0)
+    def turn_heater_off(self):
+        return self.send_cmd(SHT30.TURN_HEATER_OFF_CMD, 0)
 
 
 class SHT30Error(Exception):
