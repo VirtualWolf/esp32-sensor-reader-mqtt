@@ -2,8 +2,9 @@
   hosts: localhost
   vars_prompt:
     - name: board
-      prompt: What is the ESP32 board type? (huzzah32/qtpy_esp32/um_feathers2)
-      default: huzzah32
+      prompt: What is the ESP32 board type? (qtpy/huzzah32/um_feathers2)
+      default: qtpy
       private: false
   roles:
+    - get_serial_port
     - flash_board

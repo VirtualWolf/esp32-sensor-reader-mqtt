@@ -14,8 +14,21 @@ all:
             enable_additional_data: true
             topic: "home/{{ mqtt_client_id }}/weather"
 
-        # BME280 and ENS160
+        # SHT30
         '2':
+          - type: sht30
+            i2c_address: 68
+            enable_dew_point: true
+            topic: "home/{{ mqtt_client_id }}/weather"
+
+        # PMS5003
+        '3':
+          - type: pms5003
+            rx_pin: 12
+            topic: "home/{{ mqtt_client_id }}/airquality"
+
+        # BME280 and ENS160
+        '4':
           - type: bme280
             i2c_address: 119
             enable_additional_data: true
@@ -24,59 +37,30 @@ all:
             i2c_address: 83
             topic: "home/{{ mqtt_client_id }}/airquality"
 
-        # BME280 and PMS5003
-        '3':
-          - type: bme280
-            i2c_address: 119
-            enable_additional_data: true
-            topic: "home/{{ mqtt_client_id }}/weather"
-          - type: pms5003
-            rx_pin: 12
-            topic: "home/{{ mqtt_client_id }}/airquality"
-
-        # DHT22
-        '4':
-          - type: dht22
-            rx_pin: 26
-            topic: "home/{{ mqtt_client_id }}/weather"
-
-        # DHT22 and PMS5003
-        '5':
-          - type: dht22
-            rx_pin: 26
-            topic: "home/{{ mqtt_client_id }}/weather"
-          - type: pms5003
-            rx_pin: 12
-            topic: "home/{{ mqtt_client_id }}/airquality"
-
-        # PMS5003
-        '6':
-          - type: pms5003
-            rx_pin: 12
-            topic: "home/{{ mqtt_client_id }}/airquality"
-
-        # SHT30
-        '7':
-          - type: sht30
-            i2c_address: 68
-            enable_dew_point: true
-            topic: "home/{{ mqtt_client_id }}/weather"
-
         # VL53L1X
-        '8':
+        '5':
           - type: vl53l1x
             i2c_address: 41
             trigger_threshold_mm: 200
             ignore_trigger_period: 5
             topic: "automation/displays/dev"
 
-
       board_types:
-        '1': huzzah32
-        '2': qtpy_esp32
+        '1': qtpy
+        '2': huzzah32
         '3': um_feathers2
 
       boards:
+        # Adafruit QT Py ESP32-Pico: https://www.adafruit.com/product/5395
+        qtpy:
+          chip: esp32
+          firmware_filename: ESP32_GENERIC-SPIRAM
+          serial_port: "{{ serial_port }}"
+          sda_pin: 22
+          scl_pin: 19
+          neopixel_power_pin: 8
+          neopixel_pin: 5
+
         # Adafruit HUZZAH32: https://www.adafruit.com/product/3405
         huzzah32:
           chip: esp32
@@ -85,16 +69,6 @@ all:
           led_pin: 13
           sda_pin: 23
           scl_pin: 22
-
-        # Adafruit QT Py ESP32-Pico: https://www.adafruit.com/product/5395
-        qtpy_esp32:
-          chip: esp32
-          firmware_filename: ESP32_GENERIC-SPIRAM
-          serial_port: /dev/tty.usbserial-57930150831
-          sda_pin: 22
-          scl_pin: 19
-          neopixel_power_pin: 8
-          neopixel_pin: 5
 
         # Unexpected Maker FeatherS2: https://feathers2.io
         um_feathers2:

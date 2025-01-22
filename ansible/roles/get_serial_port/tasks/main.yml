@@ -1,0 +1,9 @@
+# This is a horrible hack because for whatever reason Ansible's "fileglob" and
+# "command" functions don't actually pick up anything under /dev
+- ansible.builtin.shell: "ls /dev/tty.wchusbserial*"
+  register: usb_serial_ports
+  when: board == "qtpy"
+
+- ansible.builtin.set_fact:
+    serial_port: "{{ usb_serial_ports.stdout_lines[0] }}"
+  when: board == "qtpy"

@@ -1,33 +1,39 @@
-- name: Set additional configuration
-  ansible.builtin.set_fact:
-    sda_pin: "{{ boards[board].sda_pin }}"
-    scl_pin: "{{ boards[board].scl_pin }}"
-    neopixel_pin: "{{ boards[board].neopixel_pin | default(false) }}"
-    neopixel_power_pin: "{{ boards[board].neopixel_power_pin | default(false) }}"
-    led_pin: "{{ boards[board].led_pin | default(false) }}"
-  when: skip_config_prompt is not defined
-
 - ansible.builtin.import_tasks: prod.yml
   when: is_production is defined and is_production == true
 
-- name: Generate config.json
-  delegate_to: localhost
-  ansible.builtin.template:
-    src: templates/config.j2
-    dest: "{{ lookup('env', 'PWD') }}/src/config.json"
-  when: skip_config_prompt is not defined
+- block:
+    - name: Set additional configuration
+      ansible.builtin.set_fact:
+        sda_pin: "{{ boards[board].sda_pin }}"
+        scl_pin: "{{ boards[board].scl_pin }}"
+        neopixel_pin: "{{ boards[board].neopixel_pin | default(false) }}"
+        neopixel_power_pin: "{{ boards[board].neopixel_power_pin | default(false) }}"
+        led_pin: "{{ boards[board].led_pin | default(false) }}"
 
-- name: Get current Git commit hash
-  delegate_to: localhost
-  ansible.builtin.command: git rev-parse --short HEAD
-  register: repository
-  when: skip_config_prompt is not defined
+    - name: Generate config.json
+      delegate_to: localhost
+      ansible.builtin.template:
+        src: templates/config.j2
+        dest: "{{ lookup('env', 'PWD') }}/src/config.json"
 
-- name: Write Git commit hash to .version file
-  delegate_to: localhost
-  ansible.builtin.copy:
-    content: "{{ repository.stdout }}"
-    dest: "{{ lookup('env', 'PWD') }}/src/.version"
+    - name: Get current Git commit hash
+      delegate_to: localhost
+      ansible.builtin.command: git rev-parse --short HEAD
+      register: repository
+
+    - name: Check if Git working directory is dirty
+      delegate_to: localhost
+      ansible.builtin.command: git diff --stat
+      register: git_status
+
+    - ansible.builtin.set_fact:
+        is_repository_dirty: "{{ '-dirty' if git_status.stdout_lines | length > 0 else '' }}"
+
+    - name: Write Git commit hash to .version file
+      delegate_to: localhost
+      ansible.builtin.copy:
+        content: "{{ repository.stdout }}{{ is_repository_dirty }}"
+        dest: "{{ lookup('env', 'PWD') }}/src/.version"
   when: skip_config_prompt is not defined
 
 - name: Copy files to board and restart

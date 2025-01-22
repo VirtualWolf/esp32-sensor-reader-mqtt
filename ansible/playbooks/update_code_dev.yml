@@ -2,6 +2,7 @@
   hosts: localhost
   vars:
     skip_config_prompt: true
-    board: huzzah32
+    board: qtpy
   roles:
+    - get_serial_port
     - copy_code

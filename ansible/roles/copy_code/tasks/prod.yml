@@ -14,7 +14,7 @@
       - type: vl53l1x
         i2c_address: 41
         topic: commands/displays/zerotoo
-        trigger_threshold_mm: 1500
+        trigger_threshold_mm: 600
         ignore_trigger_period: 3600
   when: mqtt_client_id == 'outdoor'
 
@@ -56,7 +56,8 @@
   delegate_to: localhost
   ansible.builtin.set_fact:
     sensors:
-      - type: dht22
-        rx_pin: 26
+      - type: bme280
+        i2c_address: 119
+        enable_additional_data: false
         topic: home/backroom/weather
   when: mqtt_client_id == 'backroom'

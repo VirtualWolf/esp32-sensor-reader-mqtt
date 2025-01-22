@@ -6,14 +6,15 @@
       private: false
     - name: flash_board
       prompt: Flash the board first? (yes/no)
-      default: false
+      default: no
       private: false
   vars:
     mqtt_broker_address: 10.0.1.201
-    board: huzzah32
+    board: qtpy
     disable_watchdog: false
     is_production: true
   roles:
+    - get_serial_port
     - role: flash_board
       when: flash_board | bool
     - copy_code
