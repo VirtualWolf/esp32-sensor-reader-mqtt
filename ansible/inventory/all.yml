@@ -3,8 +3,8 @@ all:
     localhost:
       ansible_connection: local
       ansible_python_interpreter: python
-      ssid: "{{ lookup('community.general.onepassword', 'UniFi Dream Router', section='Primary network', field='ssid') }}"
-      ssid_password: "{{ lookup('community.general.onepassword', 'UniFi Dream Router', section='Primary network', field='password') }}"
+      ssid: "{{ lookup('community.general.onepassword', 'UniFi Dream Router', section='Monitoring network', field='ssid') }}"
+      ssid_password: "{{ lookup('community.general.onepassword', 'UniFi Dream Router', section='Monitoring network', field='password') }}"
 
       dev_sensor_configurations:
         # BME280
