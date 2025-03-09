@@ -8,43 +8,38 @@ from update_from_github import Updater
 from logger import publish_log_message, publish_error_message, get_current_time
 from lib.ota import status, update
 
-async def messages(client):
-    async for topic, msg, retained in client.queue:
-        gc.collect()
+async def messages(client, payload):
+    gc.collect()
 
-        try:
-            payload = json.loads(msg.decode())
+    try:
+        if 'command' in payload:
+            if payload['command'] == 'get_config':
+                await get_config(client)
 
-            if 'command' in payload:
-                if payload['command'] == 'get_config':
-                    await get_config(client)
+            if payload['command'] == 'get_system_info':
+                await get_system_info(client)
 
-                if payload['command'] == 'get_system_info':
-                    await get_system_info(client)
+            elif payload['command'] == 'update_config' and 'config' in payload:
+                await update_config(incoming_config=payload.get('config'), client=client)
 
-                elif payload['command'] == 'update_config' and 'config' in payload:
-                    await update_config(incoming_config=payload.get('config'), client=client)
+            elif payload['command'] == 'replace_config':
+                await replace_config(incoming_config=payload.get('config'), client=client)
 
-                elif payload['command'] == 'replace_config':
-                    await replace_config(incoming_config=payload.get('config'), client=client)
+            elif payload['command'] == 'update_code':
+                await start_code_update(client)
 
-                elif payload['command'] == 'update_code':
-                    await start_code_update(client)
+            elif payload['command'] == 'update_firmware' and 'firmware' in payload:
+                await start_firmware_update(firmware=payload.get('firmware'), client=client)
 
-                elif payload['command'] == 'update_firmware' and 'firmware' in payload:
-                    await start_firmware_update(firmware=payload.get('firmware'), client=client)
+            elif payload['command'] == 'restart':
+                await publish_log_message(message={
+                    'message': 'Restarting...',
+                    'status': 'offline',
+                }, client=client)
+                reset()
 
-                elif payload['command'] == 'restart':
-                    await publish_log_message(message={
-                        'message': 'Restarting...',
-                        'status': 'offline',
-                    }, client=client)
-                    reset()
-
-        except ValueError as e:
-            await publish_error_message(error={'error': f'Received payload was not JSON: {msg.decode()}'}, exception=e, client=client)
-        except Exception as e:
-            await publish_error_message(error={'error': 'Something went wrong'}, exception=e, client=client)
+    except Exception as e:
+        await publish_error_message(error={'error': 'Something went wrong'}, exception=e, client=client)
 
 
 async def get_config(client):

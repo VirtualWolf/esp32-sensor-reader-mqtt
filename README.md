@@ -1,12 +1,15 @@
 # Overview
 A version of my [esp32-sensor-reader](https://github.com/VirtualWolf/esp32-sensor-reader) combined with [esp32-air-quality-reader-mqtt](https://github.com/VirtualWolf/esp32-air-quality-reader-mqtt) that reads from an attached DHT22 temperature/humidity sensor, Bosch BME280 temperature/humidity/air pressure sensor, Sensiron SHT-30 temperature/humidity sensor, Plantower PMS5003 air quality sensor, or ScioSense ENS160 air quality sensor, and publishes the readings as JSON to a local MQTT broker.
 
+It can also read messages from a set of three different MQTT topics and set the individual LEDs in Core Electronics' [PiicoDev 3x RGB LED module](https://core-electronics.com.au/piicodev-3x-rgb-led-module.html) to a given colour based on a set of thresholds.
+
 Libraries used:
 * Peter Hinch's [mqtt_as.py](https://github.com/peterhinch/micropython-mqtt/blob/master/mqtt_as/README.md) MQTT library
 * Robert Hammelrath's [BME280](https://github.com/robert-hh/BME280/) library for Bosch BME280 sensor support
 * A lightly-modified version of [Jeff Otterson's slightly modified version](https://github.com/n1kdo/temperature-sht30/blob/master/src/temperature/sht30.py) of Roberto Sánchez's [SHT30](https://github.com/rsc1975/micropython-sht30) library for Sensiron SHT30 sensor support
 * [My fork](https://github.com/VirtualWolf/ENS160) of Lukasz Awsiukiewicz's [ENS160](https://github.com/awsiuk/ENS160) library
 * drakxtwo's [vl53l1x_pico](https://github.com/drakxtwo/vl53l1x_pico) library for VL53L1X distance sensor support
+* A lightly-modified version of Core Electronics' [RGB-LED](https://github.com/CoreElectronics/CE-PiicoDev-RGB-LED-MicroPython-Module) library for support for their [PiicoDev 3x RGB LED module](https://core-electronics.com.au/piicodev-3x-rgb-led-module.html)
 * glenn20's [micropython-esp32-ota](https://github.com/glenn20/micropython-esp32-ota/) for over-the-air firmware updates
 * Jakub Bednarski's [senko](https://github.com/RangerDigital/senko/) as the original basis from the [update_from_github.py](src/update_from_github.py) code
 * Christopher Arndt's [mrequests](https://github.com/SpotlightKid/mrequests) for ease of streaming files from GitHub to flash to avoid the memory issues of regular `requests`
@@ -22,11 +25,12 @@ Requires a file called `config.json` inside `src` with the following contents:
     "port": 1883,
     "ssid": "<wifi network name>",
     "wifi_pw": "<wifi password>",
-    "sensors": [...]
+    "sensors": [...],
+    "outputs": [...]
 }
 ```
 
-The `sensors` array needs to be filled out as described below depending on which type of sensor(s) you have attached to the ESP32.
+If you're reading _from_ one or more sensors, the `sensors` array needs to be filled out as described below depending on which type of sensor(s) you have attached to the ESP32, and you can omit the `outputs` array. If instead you're using the RGB LED module to subscribe to topics and update the LEDs, you can omit the `sensors` array and instead specify the `outputs` one.
 
 Once configured, copy the whole contents of the `src` directory to the board with [mpremote](https://docs.micropython.org/en/latest/reference/mpremote.html) and restart it when it's finished:
 
@@ -241,6 +245,86 @@ If you have multiple sensor attached to a single board, you can add additional o
     "sda_pin": 19,
     "scl_pin": 18
 ```
+
+## Core Electronicså PiicoDev 3x RGB LED module
+
+The Core Electronics PiicoDev 3x RGB LED module requires the following configuration in `config.json`, including the I2C SDA and SCL pins:
+
+```json
+    "outputs": [
+        {
+            "type": "piicodev_rgb",
+            "state_topic": "commands/displays",
+            "topics": [
+                {...},
+                {...},
+                {...}
+            ]
+        }
+    ],
+    "sda_pin": 19,
+    "scl_pin": 18
+```
+
+The `state_topic` will be subscribed to and upon receiving a message with the following payload:
+
+```json
+{
+    "is_on": false
+}
+```
+
+All of the LEDs will be turned off. Turn them back on by sending `{"is_on": true}`. This can be helpful for scheduling the LEDs to turn off at night so you don't have a set of extremely bright LEDs lighting up the house when you're trying to sleep!
+
+You can optionally set the brightness of the LEDs with `led_brightness`, with a range of 0 to 255:
+
+```json
+    "outputs": [
+        {
+            "type": "piicodev_rgb",
+            "state_topic": "commands/displays",
+            "led_brightness": 50,
+            "topics": [
+                {...},
+                {...},
+                {...}
+            ]
+        }
+    ],
+```
+
+It defaults to 20 if not specified, which I've found is a decent brightness without being eye-searing.
+
+`topics` consists of an array of three objects each with the following configuration, corresponding in order to the three LEDs on the RGB LED board from top to bottom, i.e. the first object in the array corresponds to the top LED, etc. ("top" is defined by the orientation of the board when the "PiicoDev" logo on the front is up the correct way):
+
+```json
+    {
+        "topic": "home/outdoor/airquality",
+        "value": "pm_2_5",
+        "thresholds": [0, 50, 100, 150],
+        "colours": ["green", "yellow", "orange", "red"]
+    }
+```
+
+The `topic` field is the MQTT topic to subscribe to, and `value` is the field in messages in that topic whose values the LEDs will change colour based upon. The `thresholds` and `colours` arrays both need to contain the same number of elements, with the first element of the `thresholds` array matching the first element of the `colours` array, and so on.
+
+As an example, given the above configuration, received `pm_2_5` values of between 0 and 49 will cause the LED to be green, 50-99 will be yellow, 100-149 will be orange, and 150 and above will be red.
+
+There is a preset list of colours available:
+
+* `red`
+* `dark_orange`
+* `orange`
+* `yellow`
+* `green`
+* `light_green`
+* `cyan`
+* `blue`
+* `dark_blue`
+* `dark_purple`
+* `purple`
+* `fuchsia`
+* `pink`
 
 ## Other options
 

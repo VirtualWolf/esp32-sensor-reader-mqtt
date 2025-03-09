@@ -1,4 +1,5 @@
 import asyncio
+import json
 import ntptime
 from machine import Pin, reset
 from neopixel import NeoPixel
@@ -6,6 +7,7 @@ from mqtt import MQTTClient, config as mqtt_config
 from lib.ota import rollback, status
 from config import config
 import sensor
+import output_device
 import admin
 import logger
 
@@ -51,6 +53,22 @@ async def up(client):
         logger.log(f"Subscribing to {config['commands_topic']}")
         await client.subscribe(config['commands_topic'], 1)
 
+        # For any output devices as opposed to sensors, we need to subscribe to the relevant topics here
+        # so the subscription is re-established even after wifi or MQTT broker outages
+        if 'outputs' in config:
+            try:
+                piicodev_config = next(item for item in config['outputs'] if item['type'] == 'piicodev_rgb')
+            except StopIteration:
+                piicodev_config = None
+
+            if piicodev_config is not None:
+                logger.log(f"Subscribing to LED state topic at {piicodev_config['state_topic']}")
+                await client.subscribe(piicodev_config['state_topic'], 1)
+
+                for location in piicodev_config['topics']:
+                    logger.log(f"Subscribing to {location['topic']}")
+                    await client.subscribe(location['topic'], 1)
+
         await logger.publish_log_message({'status': "online"}, client=client, retain=True)
 
         # Verify that the board supports OTA updates
@@ -63,6 +81,22 @@ async def down(client):
         await client.down.wait()  # Pause until connectivity changes
         client.down.clear()
         set_connection_status(False)
+
+async def messages(client):
+    async for tpc, msg, retained in client.queue:
+        try:
+            topic = tpc.decode()
+            payload = json.loads(msg.decode())
+
+            if topic == config['commands_topic']:
+                await admin.messages(client=client, payload=payload)
+            else:
+                await output_device.update_outputs(client=client, topic=topic, payload=payload)
+
+        except ValueError as e:
+            await logger.publish_error_message(error={'error': f'Received payload was not JSON: {msg.decode()}'}, exception=e, client=client)
+        except Exception as e:
+            await logger.publish_error_message(error={'error': 'Something went wrong'}, exception=e, client=client)
 
 # The onboard NeoPixel on the Adafruit QT Py doesn't have power enabled by default so we need to turn it on first
 if config['neopixel_pin'] is not None and config['neopixel_power_pin'] is not None:
@@ -89,7 +123,7 @@ async def main(client):
     ntptime.host = config['ntp_server']
     ntptime.settime()
 
-    for coroutine in (up, down, admin.messages, sensor.read_sensors, sync_ntp):
+    for coroutine in (up, down, messages, sensor.read_sensors, sync_ntp):
         asyncio.create_task(coroutine(client))
 
     while True:

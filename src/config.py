@@ -19,6 +19,7 @@ config = {}
 
 # Settings for sensor reading
 config['sensors']                       = c.get('sensors', [])
+config['outputs']                       = c.get('outputs', [])
 config['sda_pin']                       = convert_to_int(c.get('sda_pin', 23))
 config['scl_pin']                       = convert_to_int(c.get('scl_pin', 22))
 
