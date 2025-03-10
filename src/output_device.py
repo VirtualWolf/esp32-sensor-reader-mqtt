@@ -16,7 +16,7 @@ if output_piicodev_rgb:
 
     output_piicodev_rgb['board'] = piicodev_rgb.PiicoDev_RGB(i2c=i2c, bright=output_piicodev_rgb.get('led_brightness', 20))
     output_piicodev_rgb['board'].pwrLED(False)
-    output_piicodev_rgb['current_led_states'] = [[], [], []]
+    output_piicodev_rgb['current_led_states'] = [[0,0,0], [0,0,0], [0,0,0]]
 
 if config['disable_watchdog'] is not True:
     wdt = WDT(timeout=120000)
