@@ -61,3 +61,25 @@
         enable_additional_data: false
         topic: home/backroom/weather
   when: mqtt_client_id == 'backroom'
+
+- name: Configure for production indoor environmental LEDs
+  delegate_to: localhost
+  ansible.builtin.set_fact:
+    outputs:
+      - "{{ piicodev_base_configuration | combine
+            (
+              { 'topics': [piicodev_topics.dew_point, piicodev_topics.pm_2_5, piicodev_topics.indoor_aqi] }
+            )
+        }}"
+  when: mqtt_client_id == 'indoor-aq-status'
+
+- name: Configure for production office environmental LEDs
+  delegate_to: localhost
+  ansible.builtin.set_fact:
+    outputs:
+      - "{{ piicodev_base_configuration | combine
+            (
+              { 'topics': [piicodev_topics.dew_point, piicodev_topics.pm_2_5, piicodev_topics.office_aqi] }
+            )
+        }}"
+  when: mqtt_client_id == 'office-aq-status'

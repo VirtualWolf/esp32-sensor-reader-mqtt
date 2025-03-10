@@ -16,6 +16,11 @@
 {% if led_pin %}
     "led_pin": {{ led_pin }},
 {% endif %}
+{% if sensors is defined %}
     "sensors": {{ sensors | to_nice_json }},
+{% endif %}
+{% if outputs is defined %}
+    "outputs": {{ outputs | to_nice_json }},
+{% endif %}
     "disable_watchdog": {{ disable_watchdog | default(false) | bool | to_nice_json }}
 }

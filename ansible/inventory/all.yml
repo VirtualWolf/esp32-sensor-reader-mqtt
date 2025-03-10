@@ -6,6 +6,33 @@ all:
       ssid: "{{ lookup('community.general.onepassword', 'UniFi Dream Router', section='Monitoring network', field='ssid') }}"
       ssid_password: "{{ lookup('community.general.onepassword', 'UniFi Dream Router', section='Monitoring network', field='password') }}"
 
+      piicodev_base_configuration: &piicodev_base_configuration
+        - type: piicodev_rgb
+          led_brightness: 20
+          state_topic: commands/displays
+
+      piicodev_topics:
+        dew_point: &dew_point
+          topic: home/outdoor/weather
+          value: dew_point
+          thresholds: [-10, 10, 13, 16, 18, 21, 24]
+          colours: [blue, light_green, green, yellow, orange, dark_orange, red]
+        pm_2_5: &pm_2_5
+          topic: home/outdoor/airquality
+          value: pm_2_5
+          thresholds: [0, 50, 100, 150]
+          colours: [green, yellow, orange, red]
+        aqi: &aqi
+          value: aqi
+          thresholds: [1, 2, 3, 4, 5]
+          colours: [blue, green, yellow, orange, red]
+        indoor_aqi: &indoor_aqi
+          <<: *aqi
+          topic: home/indoor/airquality
+        office_aqi:
+          <<: *aqi
+          topic: home/office/airquality
+
       dev_sensor_configurations:
         # BME280
         '1':
